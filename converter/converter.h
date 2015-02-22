@@ -37,14 +37,16 @@ some special codes also exists, when energies in that contest are written in keV
 ********************************/
 
 
-#define _CRT_SECURE_NO_WARNINGS		// VS does not bother anymore with sprintf and strtok
-#define _USE_MATH_DEFINES			// VS does not bother anymore with M_PI not defined
+#define _CRT_SECURE_NO_WARNINGS
+#define _USE_MATH_DEFINES
 
 #include <iostream>
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
+#include <iterator>
+#include <streambuf>
 #include <functional>
 #include <iomanip>
 #include <cmath>
@@ -70,53 +72,55 @@ some special codes also exists, when energies in that contest are written in keV
 #define USE_RESERVE
 #endif
 
-#define ZERO		0.0		// used for the reference particle
-#define USA_NUOVI
-#define TRASH_SIZE	2048
-#define EPSILON		1.E-3
+#define ZERO    0.0   // used for the reference particle
+#define TRASH_SIZE  2048
+#define EPSILON   1.E-5
 
-//#define C			299792458			// light speed [m / s]
-//#define C			2.99792458e+10		// light speed [cm / s] (direttamente da Propaga)
-#define Q			1.602176487E-19		// electric charge [C]
-#define Q_nC		1.602176487e-10		// electric charge [nC]
-// #define Q_sC		4.80320425e-10		// electric charge [statCoulomb]	commentata perche' Turchetti la usa un po' diversa
-#define Q_sC		4.803262e-10		// electric charge [statCoulomb]    valore usato da Turchetti; nb: e' impreciso negli ultimi due decimali
-#define MP_KG		1.6726E-27			// proton mass [kg]
-#define MP_G		1.6726231E-24		// proton mass [g]
-#define MP_EV		938272013.0			// proton mass [eV / c^2]
-#define MP_MEV		938.272013			// proton mass [MeV / c^2]
-#define MP_GEV		0.938272013			// proton mass [GeV / c^2]
-#define MP_MEV_INV	0.0010657890101641558821599424601
-#define ME_KG		9.10938291E-31		// electron mass [kg]
-#define ME_G		9.10938291E-28		// electron mass [g]
-#define ME_EV		510998.928			// electron mass [eV / c^2]
-#define ME_MEV		0.510998928			// electron mass [MeV / c^2]
-#define ME_GEV		5.10998928E-4		// electron mass [GeV / c^2]
-#define ME_MEV_INV	1.9569512678116616322921131450984
-#define TEMPO		0.0					// initial time [ns]
-#define MQ			1.875E-7			// macro electric charge [nC]
-#define type_ASTRA	3					// particle type: 1 (electrons), 2 (positrons), 3 (protons) //nb: non coerenti con Fluka ne' con la convenzione di Propaga
-#define type_FLUKA	1					// particle type: 1 (protons), 3 (electrons)				//nb: non coerenti con Astra MA corretti con l'uso che ne si fa in Propaga
-#define absorbed	0
-#define ordinal_n	0
-#define initial_status			5			// flag particelle: negative (not yet started or lost), 0-1 (passive), 3 (probe), 5 (standard)
-#define DA_CM_A_MICRON			1.e+4
-#define DA_MICRON_A_CM			1.e-4
-#define FROM_TESLA_TO_GAUSS		1.e+4
-#define DA_ERG_A_MEV			6.241509744512e+5	// conversione mia come sotto descritta
-#define FROM_VOLT_TO_STATVOLT	3.335640951982e-3	// 1 statvolt = 299.792458 volts.
-#define DIM_MAX_LINEA			1024
-#define gamma_rel_inv(x)		(1.0 / sqrt(1.0 + x[3]*x[3]+x[4]*x[4]+x[5]*x[5]))
-#define gamma_rel(x)			(sqrt(1.0 + x[3]*x[3]+x[4]*x[4]+x[5]*x[5]))			// gamma relativistico definito in funzione dei gamma*beta usati nei file
+//#define C     299792458          // light speed [m / s]
+//#define C     2.99792458e+10     // light speed [cm / s] (direttamente da Propaga)
+#define Q       1.602176487E-19    // electric charge [C]
+#define Q_nC    1.602176487e-10    // electric charge [nC]
+//#define Q_sC  4.80320425e-10    // electric charge [statCoulomb]  commentata perche' Turchetti la usa un po' diversa
+#define Q_sC    4.803262e-10       // electric charge [statCoulomb]  valore usato da Turchetti; nb: e' impreciso negli ultimi due decimali
+#define MP_KG   1.6726E-27         // proton mass [kg]
+#define MP_G    1.6726231E-24      // proton mass [g]
+#define MP_EV   938272013.0        // proton mass [eV / c^2]
+#define MP_MEV  938.272013         // proton mass [MeV / c^2]
+#define MP_GEV  0.938272013        // proton mass [GeV / c^2]
+#define MP_MEV_INV  0.0010657890101641558821599424601
+#define ME_KG   9.10938291E-31     // electron mass [kg]
+#define ME_G    9.10938291E-28     // electron mass [g]
+#define ME_EV   510998.928         // electron mass [eV / c^2]
+#define ME_MEV  0.510998928        // electron mass [MeV / c^2]
+#define ME_GEV  5.10998928E-4      // electron mass [GeV / c^2]
+#define ME_MEV_INV  1.9569512678116616322921131450984
+#define TEMPO   0.0                // initial time [ns]
+#define MQ      1.875E-7           // macro electric charge [nC]
+#define type_ASTRA  3              // particle type: 1 (electrons), 2 (positrons), 3 (protons) //nb: non coerenti con Fluka ne' con la convenzione di Propaga
+#define type_FLUKA  1              // particle type: 1 (protons), 3 (electrons)        //nb: non coerenti con Astra MA corretti con l'uso che ne si fa in Propaga
+#define absorbed    0
+#define ordinal_n   0
+#define initial_status        5    // flag particelle: negative (not yet started or lost), 0-1 (passive), 3 (probe), 5 (standard)
+#define DA_CM_A_MICRON        1.e+4
+#define DA_MICRON_A_CM        1.e-4
+#define FROM_TESLA_TO_GAUSS   1.e+4
+#define DA_ERG_A_MEV          6.241509744512e+5 // conversione mia come sotto descritta
+#define FROM_VOLT_TO_STATVOLT 3.335640951982e-3 // 1 statvolt = 299.792458 volts.
+#define DIM_MAX_LINEA         1024
+#define gamma_rel_inv(x)      (1.0 / sqrt(1.0 + x[3]*x[3]+x[4]*x[4]+x[5]*x[5]))
+#define gamma_rel(x)          (sqrt(1.0 + x[3]*x[3]+x[4]*x[4]+x[5]*x[5]))     // gamma relativistico definito in funzione dei gamma*beta usati nei file
 
 
 bool doubleEquality(double, double);
 
 void preproc_from_micron_to_cm(char *, char *);
 void preproc_from_NewP_to_OldP(char *, char *);
-void convert_from_Propaga_to_Astra(char *, char *, double);
-void convert_from_Astra_to_Propaga(char *, char *, double, double);
-void convert_from_Propaga_to_Astra_fixed(char *, char *, double, double);
+void convert_from_propaga_to_binary_dst(char *, char *, double, double, double);
+void convert_from_binary_dst_to_ascii(char *, char *, double);
+void convert_from_binary_plt_to_ascii(char *, char *, double);
+void convert_from_propaga_to_astra(char *, char *, double);
+void convert_from_astra_to_propaga(char *, char *, double, double);
+void convert_from_propaga_to_astra_fixed(char *, char *, double, double);
 void convert_from_fluka_to_propaga(char *, char *, double);
 void convert_from_propaga_to_path(char *, char *, double, double, int, double, double, double);
 void convert_from_path_to_propaga(char *, char *);
@@ -131,7 +135,7 @@ void preproc_angularCut(char *, char *, double, double);
 void postproc_removeLostParticles(char *, char *, int);
 void preproc_subsample(char *, char *, int);
 void postproc_removeParticlesGoneToInfinity(char *, char *);
-void from_ppg_to_vtk(char *, char *);		// INCOMPLETO
+void from_ppg_to_vtk(char *, char *);   // INCOMPLETO
 void postproc_split_p_and_e(char *, char *, char *);
 void postproc_split_by_weight(char *, int);
 void preproc_from_OldP_to_NewP(char *, char *, int, double, int);

@@ -148,7 +148,7 @@ void convert_from_jasmine(char * fileIN, char* fileOUT)
   std::vector <std::vector <double> > particelle_file(numero_particelle, std::vector<double>(ncolIN + 5, 0));
   double temporary_buffer = 0.0;
 
-  //	std::cout << "Inizializzato un vettore da " << numero_particelle << " righe e  " << ncolIN << " colonne." << std::endl;
+  //  std::cout << "Inizializzato un vettore da " << numero_particelle << " righe e  " << ncolIN << " colonne." << std::endl;
 
   for (int i = 0; i < ncolIN; i++)
   {
@@ -160,12 +160,12 @@ void convert_from_jasmine(char * fileIN, char* fileOUT)
     if (in.eof()) break;
   }
 
-  // colonne standard di jasmine:	
-  //		1-2-3: posizioni in cm
-  //		4-5-6: momenti normalizzati (gamma*beta)
-  //		7: massa in g
-  //		8: carica in statCoulomb
-  //		9: 1/gamma
+  // colonne standard di jasmine: 
+  //    1-2-3: posizioni in cm
+  //    4-5-6: momenti normalizzati (gamma*beta)
+  //    7: massa in g
+  //    8: carica in statCoulomb
+  //    9: 1/gamma
   for (int j = 0; j < numero_particelle; j++)
   {
     if (particelle_file.at(j).at(7) > 0)
@@ -201,6 +201,83 @@ void convert_from_jasmine(char * fileIN, char* fileOUT)
   std::cout << "\nConvertito il file da jasmine (binario) a propaga (ascii)" << std::endl;
 }
 
+
+void preproc_from_OldP_to_NewP(char *fileIN, char *fileOUT, int particleId, double weight, int colbin)
+{
+  int64_t dimensione_file = 0;
+  std::vector<double> dati_particella(6, 0);
+  std::vector<std::vector <double> > particelle_file;
+
+#ifdef USE_RESERVE
+  size_t size_vector = RESERVE_SIZE_VECTOR;
+  int multiplo = 1;
+  particelle_file.reserve(size_vector*multiplo);
+#endif
+
+  std::ifstream in(fileIN);
+  std::ofstream out(fileOUT);
+
+  char str[DIM_MAX_LINEA];
+  in.getline(str, DIM_MAX_LINEA);
+
+  if (in.fail())
+  {
+    printf("Unable to proceed!\n");
+    in.close();
+    out.close();
+    return;
+  }
+
+  // riportiamo lo stream di lettura all'inizio, la prima riga la leggiamo solo per sapere se c'è qualcosa nel file
+  in.clear();
+  in.seekg(0, std::ios::beg);
+
+  while (1)
+  {
+    if (colbin == 0)  // non bisogna invertire x e z
+    {
+      in >> dati_particella.at(0) >> dati_particella.at(1) >> dati_particella.at(2)
+        >> dati_particella.at(3) >> dati_particella.at(4) >> dati_particella.at(5);
+    }
+    else
+    {
+      in >> dati_particella.at(2) >> dati_particella.at(0) >> dati_particella.at(1)
+        >> dati_particella.at(5) >> dati_particella.at(3) >> dati_particella.at(4);
+    }
+    if (in.eof()) break;
+
+    dati_particella[0] *= 1.e-4;    // l'input avviene in cm, non piu' in micrometri
+    dati_particella[1] *= 1.e-4;
+    dati_particella[2] *= 1.e-4;
+    particelle_file.push_back(dati_particella);
+    dimensione_file++;  //utile per dei check se sta crescendo troppo
+
+#ifdef USE_RESERVE
+    if (!(dimensione_file % size_vector))
+    {
+      multiplo++;
+      particelle_file.reserve(size_vector*multiplo);
+    }
+#endif
+  }
+
+
+  for (int i = 0; i < dimensione_file; i++)
+  {
+    out << std::setprecision(7) << std::setiosflags(std::ios::scientific)
+      << particelle_file[i][0] << "\t" << particelle_file[i][1] << "\t" << particelle_file[i][2] << "\t"
+      << particelle_file[i][3] << "\t" << particelle_file[i][4] << "\t" << particelle_file[i][5] << "\t"
+      << particleId << "\t" << weight << "\t" << "0" << "\t"
+      << i + 1 << std::endl;
+  }
+
+
+
+  in.close();
+  out.close();
+
+  std::cout << "\nConvertite " << dimensione_file << " particelle dal vecchio al nuovo formato di Propaga" << std::endl;
+}
 
 
 void preproc_from_NewP_to_OldP(char * fileIN, char* fileOUT)
@@ -249,7 +326,7 @@ void preproc_from_NewP_to_OldP(char * fileIN, char* fileOUT)
   while (1)
   {
     for (int i = 0; i < contacolonne; i++) in >> dati_particella.at(i);
-    dati_particella.at(0) *= DA_CM_A_MICRON;			// files with 6 columns historically have positions in micrometers, not centimeters
+    dati_particella.at(0) *= DA_CM_A_MICRON;      // files with 6 columns historically have positions in micrometers, not centimeters
     dati_particella.at(1) *= DA_CM_A_MICRON;
     dati_particella.at(2) *= DA_CM_A_MICRON;
 
@@ -270,7 +347,251 @@ void preproc_from_NewP_to_OldP(char * fileIN, char* fileOUT)
   std::cout << "\nConvertito il file e preservate solo le prime 6 colonne" << std::endl;
 }
 
-void convert_from_Propaga_to_Astra(char *fileIN, char *fileOUT, double C)
+
+void convert_from_propaga_to_binary_dst(char *fileIN, char *fileOUT, double C, double freq, double curr)
+{
+  std::ifstream in(fileIN, std::ios::in);
+  std::ofstream out(fileOUT, std::ofstream::binary | std::ios::out);
+
+  int contacolonne = 0;
+  char str[DIM_MAX_LINEA];
+  char * pch;
+  in.getline(str, DIM_MAX_LINEA);
+  // riportiamo lo stream di lettura all'inizio, la prima riga la leggiamo solo per sapere la struttura in colonne del file
+  in.clear();
+  in.seekg(0, std::ios::beg);
+
+  pch = strtok(str, " \t");
+  if (pch != NULL) contacolonne++;
+  while (pch != NULL)
+  {
+    pch = strtok(NULL, " \t");
+    if (pch != NULL) contacolonne++;
+  }
+  printf("Found %d columns in your file\n", contacolonne);
+
+  if (contacolonne == 0)
+  {
+    printf("Unable to proceed!\n");
+    in.close();
+    out.close();
+    return;
+  }
+
+  if (contacolonne < 6)
+  {
+    printf("Unable to proceed, missing required columns\n");
+    in.close();
+    out.close();
+    return;
+  }
+
+  printf("Assuming x, y and z in cm  on columns 1-2-3\n");
+  printf("Assuming normalized px, py and pz on columns 4-5-6\n");
+
+  int ncol_dst = 6;
+  std::vector<double> dati_particella(ncol_dst, 0);
+  std::vector<double> dati_letti(contacolonne, 0);
+  std::vector<std::vector <double> > particelle_file;
+  std::vector<char> support_char(2, 0);
+  double wavelength = C / freq;
+
+  while (true)
+  {
+    for (int i = 0; i < contacolonne; i++) in >> dati_letti.at(i);
+
+    if (in.eof()) break;
+
+    // dst particle structure: x(cm),x'(rad),y(cm),y'(rad),phi(rad),Energie(MeV)
+
+    // positions along x and y must be in cm, so they are already ok!
+    // px and py must be x' and y' (rad), so we should be ready!
+    dati_particella[0] = dati_letti[0];
+    dati_particella[1] = dati_letti[3];
+    dati_particella[2] = dati_letti[1];
+    dati_particella[3] = dati_letti[4];
+
+    // position along z is converted to a phase in rad
+    dati_particella[4] = dati_letti[2] * 2.0 * M_PI / (wavelength * dati_letti[5]);
+
+    // pz is converted to particle energy in MeV
+    double relativistic_gamma = (sqrt(1.0 + dati_letti[3] * dati_letti[3] + dati_letti[4] * dati_letti[4] + dati_letti[5] * dati_letti[5]));
+    dati_particella[5] = (DA_ERG_A_MEV)* (relativistic_gamma - 1.0) * MP_G * C * C;
+    particelle_file.push_back(dati_particella);
+  }
+
+  int number_of_particles = particelle_file.size();
+  double mc2 = MP_MEV /* *C *C */;
+
+  /*
+  A.dst file use a binary format.It contains information of a beam at a given longitudinal position : number of particles, beam current, repetition frequency and rest mass as well as the 6D particles coordinates.The format is the following :
+  2xCHAR + INT(Np) + DOUBLE(Ib(mA)) + DOUBLE(freq(MHz)) + CHAR +
+  Np×[6×DOUBLE(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV))] +
+  DOUBLE(mc2(MeV))
+  Comments :
+  - CHAR is 1 byte long,
+  - INT is 4 bytes long,
+  - DOUBLE is 8 bytes long.
+  - Np is the number of particles,
+  - Ib is the beam current,
+  - freq is the bunch frequency,
+  - mc2 is the particle rest mass.
+  */
+
+  out.write(reinterpret_cast<const char*>(&(support_char[0])), sizeof(support_char) * sizeof(char));
+  out.write(reinterpret_cast<const char*>(&number_of_particles), sizeof(number_of_particles) * sizeof(int));
+  out.write(reinterpret_cast<const char*>(&freq), sizeof(double));
+  out.write(reinterpret_cast<const char*>(&curr), sizeof(double));
+  out.write(reinterpret_cast<const char*>(&(support_char[0])), 1 * sizeof(char));
+  std::copy(particelle_file.begin(), particelle_file.end(), std::ostreambuf_iterator<char>(out));
+  //out.write(reinterpret_cast<const char *>(&(particelle_file[0])), sizeof(particelle_file) * sizeof(dati_particella) * sizeof(double));
+  out.write(reinterpret_cast<const char*>(&mc2), sizeof(double));
+
+  in.close();
+  out.close();
+
+  std::cout << "\nConvertite " << particelle_file.size() << " particelle in binario .dst" << std::endl;
+}
+
+
+void convert_from_binary_dst_to_ascii(char *fileIN, char *fileOUT, double C)
+{
+  std::ifstream in(fileIN, std::ifstream::binary | std::ios::in);
+  std::ofstream out(fileOUT, std::ios::out);
+
+  //2xCHAR + INT(Np) + DOUBLE(Ib(mA)) + DOUBLE(freq(MHz)) + CHAR + Np×[6×DOUBLE(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV))] + DOUBLE(mc2(MeV))
+  int ncol_dst = 6;
+  std::vector<char> support_char(2, 0);
+  int np;
+  double curr, freq, mc2;
+
+  in.read(&(support_char[0]), support_char.size()*sizeof(char));
+  in.read((char*)&np, sizeof(int));
+  in.read((char*)&curr, sizeof(double));
+  in.read((char*)&freq, sizeof(double));
+  in.read(&(support_char[0]), 1 * sizeof(char));
+  std::vector<std::vector<double>> particelle_file(np, std::vector<double>(ncol_dst, 0));
+  in.read((char*)&(particelle_file[0]), np * ncol_dst * sizeof(double));
+  in.read((char*)&mc2, sizeof(double));
+
+  double wavelength = C / freq;
+  std::vector<std::vector<double>> particelle(np, std::vector<double>(ncol_dst, 0));
+
+  for (int i = 0; i < np; i++)
+  {
+    // positions along x and y must be in cm, so they are already ok!
+    // px and py must be x' and y' (rad), so we should be ready!
+    particelle.at(i).at(0) = particelle_file.at(i).at(0);
+    particelle.at(i).at(1) = particelle_file.at(i).at(2);
+    particelle.at(i).at(3) = particelle_file.at(i).at(1);
+    particelle.at(i).at(4) = particelle_file.at(i).at(3);
+
+    // pz must be converted from a particle energy in MeV to a z' (beta_z)
+    double beta_transverse2 = particelle_file.at(i).at(1) * particelle_file.at(i).at(1) + particelle_file.at(i).at(3) * particelle_file.at(i).at(3);
+    double relativistic_gamma = (particelle_file.at(i).at(5) / (DA_ERG_A_MEV*MP_G*C*C)) + 1.0;
+    double relativistic_gamma2 = relativistic_gamma*relativistic_gamma;
+    particelle.at(i).at(5) = sqrt(relativistic_gamma2 - beta_transverse2 - 1.0);
+
+    // position along z must be converted from a phase in rad to a position in cm
+    particelle.at(i).at(2) = particelle_file.at(i).at(4) * wavelength * particelle.at(i).at(5) / (2.0 * M_PI);
+  }
+
+  out << "#" << np << ' ' << freq << ' ' << curr << ' ' << mc2 << std::endl;
+  for (int i = 0; i < np; i++)
+  {
+    for (int j = 0; j < ncol_dst; j++) out << particelle.at(i).at(j) << '\t';
+    out << std::endl;
+  }
+
+  in.close();
+  out.close();
+
+  std::cout << "\nConvertite " << particelle_file.size() << " particelle da binario .dst ad ascii" << std::endl;
+}
+
+
+void convert_from_binary_plt_to_ascii(char *fileIN, char *fileOUT, double C)
+{
+  std::ifstream in(fileIN, std::ifstream::binary | std::ios::in);
+  std::ofstream out(fileOUT, std::ios::out);
+
+  //2xCHAR+INT(Ne)+INT(Np)+DOUBLE(Ib(A))+DOUBLE(freq(MHz))+DOUBLE(mc2(MeV)) +
+  // + Ne×[CHAR + INT(Nelp) + DOUBLE(Zgen) + DOUBLE(phase0(deg)) + DOUBLE(wgen(MeV)) + Np×[7×FLOAT(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV), Loss)]]
+
+  /*
+  Comments:
+  - CHAR is 1 byte long,
+  - INT is 4 bytes long,
+  - FLOAT is a Real 4 bytes long.
+  - DOUBLE is a Real 8 bytes long.
+  - Ne is the number of different positions,
+  - Np is the number of particles,
+  - Ib is the beam current,
+  - freq is the bunch frequency,
+  - mc2 is the particle rest mass,
+  - Nelp is the longitudinal element position,
+  - Zgen is the longitudinal position in cm,
+  - Phase0 & wgen are the phase and energy references of the beam
+  - Loss (UNDEFINED in TraceWin Manual - maybe related to a particle lost flag?)
+  */
+
+  int npos, ncol_plt = 7;
+  std::vector<char> support_char(2, 0);
+  int np;
+  double curr, freq, mc2;
+
+  in.read(&(support_char[0]), support_char.size()*sizeof(char));
+  in.read((char*)&npos, sizeof(int));
+  in.read((char*)&np, sizeof(int));
+  in.read((char*)&curr, sizeof(double));
+  in.read((char*)&freq, sizeof(double));
+  in.read((char*)&mc2, sizeof(double));
+
+  double wavelength = C / freq;
+  std::vector<int> nelp(npos, 0);
+  std::vector<double> zgen(npos, 0);
+  std::vector<double> phase0(npos, 0);
+  std::vector<double> wgen(npos, 0);
+  std::vector<std::vector<std::vector<double>>> particelle_file(npos, std::vector<std::vector<double> >(np, std::vector<double>(ncol_plt, 0)));
+
+  for (int i = 0; i < npos; i++)
+  {
+    in.read(&(support_char[0]), 1 * sizeof(char));
+    in.read((char*)&(nelp[i]), sizeof(int));
+    in.read((char*)&(zgen[i]), sizeof(double));
+    in.read((char*)&(phase0[i]), sizeof(double));
+    in.read((char*)&(wgen[i]), sizeof(double));
+    in.read((char*)&(particelle_file[i][0]), np * ncol_plt * sizeof(double));
+  }
+
+  out << "#" << np << ' ' << freq << ' ' << curr << ' ' << mc2 << std::endl;
+
+  for (int i = 0; i < npos; i++)
+  {
+    out << "#" << npos << ' ' << nelp[i] << ' ' << zgen[i] << ' ' << phase0[i] << ' ' << wgen[i] << std::endl;
+    for (int j = 0; j < np; j++)
+    {
+      for (int k = 0; k < ncol_plt; k++) out << particelle_file.at(i).at(j).at(k) << '\t';
+
+      double beta_transverse2 = particelle_file.at(i).at(j).at(1) * particelle_file.at(i).at(j).at(1) + particelle_file.at(i).at(j).at(3) * particelle_file.at(i).at(j).at(3);
+      double relativistic_gamma = (particelle_file.at(i).at(j).at(5) / (DA_ERG_A_MEV*MP_G*C*C)) + 1.0;
+      double relativistic_gamma2 = relativistic_gamma*relativistic_gamma;
+      // z' will be appended at the end of the line
+      out << sqrt(relativistic_gamma2 - beta_transverse2 - 1.0) << '\t';
+      // z in cm will be appended at the end of the line
+      out << particelle_file.at(i).at(j).at(4) * wavelength * particelle_file.at(i).at(j).at(5) / (2.0 * M_PI);
+      out << std::endl;
+    }
+  }
+
+  in.close();
+  out.close();
+
+  std::cout << "\nConvertite " << particelle_file.size() << " particelle da binario .plt ad ascii" << std::endl;
+}
+
+
+void convert_from_propaga_to_astra(char *fileIN, char *fileOUT, double C)
 {
   int N = 0;
 
@@ -328,9 +649,9 @@ void convert_from_Propaga_to_Astra(char *fileIN, char *fileOUT, double C)
     // NON PIU' VALIDO, ORA LE POSIZIONI SONO ESPRESSE IN CENTIMETRI!
     // positions in input are expressed in micrometers, so we convert it in meters
     dati_particella[0] *= 1.0e-6;
-    //		x += dati_particella[0];
+    //    x += dati_particella[0];
     dati_particella[1] *= 1.0e-6;
-    //		y += dati_particella[1];
+    //    y += dati_particella[1];
     dati_particella[2] *= 1.0e-6;
     z += dati_particella[2];
     ********************************/
@@ -363,7 +684,7 @@ void convert_from_Propaga_to_Astra(char *fileIN, char *fileOUT, double C)
 
   /**********************************************************************************************
   * The first line defines the coordinates of the reference particle in absolute coordinates.   *
-  * It is recommended to refer it to the bunch center											  *
+  * It is recommended to refer it to the bunch center                       *
   **********************************************************************************************/
 
   // nb: mettiamo la particella di riferimento in z=0 e non nello z medio appena calcolato, sembra funzionare meglio ma forse e' sbagliato
@@ -391,8 +712,7 @@ void convert_from_Propaga_to_Astra(char *fileIN, char *fileOUT, double C)
 }
 
 
-
-void convert_from_Propaga_to_Astra_fixed(char *fileIN, char *fileOUT, double C, double pzref)
+void convert_from_propaga_to_astra_fixed(char *fileIN, char *fileOUT, double C, double pzref)
 {
   int N = 0;
 
@@ -479,7 +799,7 @@ void convert_from_Propaga_to_Astra_fixed(char *fileIN, char *fileOUT, double C, 
 
   /**********************************************************************************************
   * The first line defines the coordinates of the reference particle in absolute coordinates.   *
-  * It is recommended to refer it to the bunch center											  *
+  * It is recommended to refer it to the bunch center                       *
   **********************************************************************************************/
 
   // nb: mettiamo la particella di riferimento in z=0 e non nello z medio appena calcolato, sembra funzionare meglio ma forse e' sbagliato
@@ -506,8 +826,7 @@ void convert_from_Propaga_to_Astra_fixed(char *fileIN, char *fileOUT, double C, 
 }
 
 
-
-void convert_from_Astra_to_Propaga(char *fileIN, char *fileOUT, double C, double weight)
+void convert_from_astra_to_propaga(char *fileIN, char *fileOUT, double C, double weight)
 {
   int N = 0;
 
@@ -586,7 +905,6 @@ void convert_from_Astra_to_Propaga(char *fileIN, char *fileOUT, double C, double
 }
 
 
-
 void preproc_remove_negatives(char *fileIN, char *fileOUT, int whichcol)
 {
   std::ifstream in(fileIN);
@@ -617,7 +935,7 @@ void preproc_remove_negatives(char *fileIN, char *fileOUT, int whichcol)
     return;
   }
 
-  whichcol--;		//cosi' puo' essere usata direttamente come indirizzo array
+  whichcol--;   //cosi' puo' essere usata direttamente come indirizzo array
   if (whichcol < 0 || whichcol >= contacolonne)
   {
     printf("You asked to analyze a column which does not exist!");
@@ -642,7 +960,7 @@ void preproc_remove_negatives(char *fileIN, char *fileOUT, int whichcol)
     if (dati_particella.at(whichcol) >= 0.0)
     {
       particelle_file.push_back(dati_particella);
-      dimensione_file++;	//utile per dei check se sta crescendo troppo
+      dimensione_file++;  //utile per dei check se sta crescendo troppo
     }
 
 #ifdef USE_RESERVE
@@ -672,7 +990,7 @@ void preproc_remove_negatives(char *fileIN, char *fileOUT, int whichcol)
   std::cout << "\nConservate solo le particelle con coordinata positiva nella " << whichcol << " colonna" << std::endl;
   particelle_file.clear();
 
-}
+    }
 
 
 void preproc_nullify_transverse_momentum(char *fileIN, char *fileOUT)
@@ -721,7 +1039,7 @@ void preproc_nullify_transverse_momentum(char *fileIN, char *fileOUT)
     if (in.eof()) break;
 
     dati_particella.at(3) = dati_particella.at(4) = 0.;
-    //		dati_particella.at(0) = dati_particella.at(1) = 0.;
+    //    dati_particella.at(0) = dati_particella.at(1) = 0.;
 
     particelle_file.push_back(dati_particella);
     dimensione_file++;
@@ -754,8 +1072,7 @@ void preproc_nullify_transverse_momentum(char *fileIN, char *fileOUT)
   std::cout << "\nAzzerati gli impulsi trasversi delle particelle!" << std::endl;
   particelle_file.clear();
 
-}
-
+    }
 
 
 void convert_from_fluka_to_propaga(char *fileIN, char *fileOUT, double weight)
@@ -792,17 +1109,17 @@ void convert_from_fluka_to_propaga(char *fileIN, char *fileOUT, double weight)
 
   while (1)
   {
-    in >> dati_particella.at(0) >> dati_particella.at(1) >> dati_particella.at(2)			// JTRACK, ETRACK-AM(JTRACK), ATRACK
-      >> dati_particella.at(3) >> dati_particella.at(4) >> dati_particella.at(5)			// XSCO, YSCO, ZSCO,
-      >> dati_particella.at(6) >> dati_particella.at(7) >> dati_particella.at(8);			// CXTRCK, CYTRCK, CZTRCK
+    in >> dati_particella.at(0) >> dati_particella.at(1) >> dati_particella.at(2)     // JTRACK, ETRACK-AM(JTRACK), ATRACK
+      >> dati_particella.at(3) >> dati_particella.at(4) >> dati_particella.at(5)      // XSCO, YSCO, ZSCO,
+      >> dati_particella.at(6) >> dati_particella.at(7) >> dati_particella.at(8);     // CXTRCK, CYTRCK, CZTRCK
     if (in.eof()) break;
 
     // non dobbiamo piu' convertire le posizioni in micrometri, siccome anche in propaga l'input e l'output ora sono in centimetri
-    //		dati_particella[3] *= DA_CM_A_MICRON;
-    //		dati_particella[4] *= DA_CM_A_MICRON;
-    //		dati_particella[5] *= DA_CM_A_MICRON;
+    //    dati_particella[3] *= DA_CM_A_MICRON;
+    //    dati_particella[4] *= DA_CM_A_MICRON;
+    //    dati_particella[5] *= DA_CM_A_MICRON;
 
-    if (dati_particella[0] > 0.9 && dati_particella[0] < 1.1)	// e' un protone
+    if (dati_particella[0] > 0.9 && dati_particella[0] < 1.1) // e' un protone
     {
       dati_particella[9] = MP_G;
     }
@@ -819,7 +1136,7 @@ void convert_from_fluka_to_propaga(char *fileIN, char *fileOUT, double weight)
       continue;
     }
 
-    if (dati_particella[1] > 0.0) dati_particella[10] = 0.0;				// le particelle sono vive solo se hanno energia cinetica positiva
+    if (dati_particella[1] > 0.0) dati_particella[10] = 0.0;        // le particelle sono vive solo se hanno energia cinetica positiva
     else if (dati_particella[1] <= 0.0) dati_particella[10] = 1.0;
 
     if (dati_particella[9] >= 0.) dati_particella[1] = sqrt(pow(((dati_particella[1] * 1000.0) / (DA_ERG_A_MEV * dati_particella[9] * C*C)) + 1.0, 2.0) - 1.0);
@@ -828,7 +1145,7 @@ void convert_from_fluka_to_propaga(char *fileIN, char *fileOUT, double weight)
     dati_particella[8] *= dati_particella[1];
 
     particelle_file.push_back(dati_particella);
-    dimensione_file++;	//utile per dei check se sta crescendo troppo
+    dimensione_file++;  //utile per dei check se sta crescendo troppo
 
 #ifdef USE_RESERVE
     if (!(dimensione_file % size_vector))
@@ -854,86 +1171,7 @@ void convert_from_fluka_to_propaga(char *fileIN, char *fileOUT, double weight)
   out.close();
 
   std::cout << "\nConvertite " << dimensione_file << " particelle da Fluka a Propaga" << std::endl;
-}
-
-
-void preproc_from_OldP_to_NewP(char *fileIN, char *fileOUT, int particleId, double weight, int colbin)
-{
-  int64_t dimensione_file = 0;
-  std::vector<double> dati_particella(6, 0);
-  std::vector<std::vector <double> > particelle_file;
-
-#ifdef USE_RESERVE
-  size_t size_vector = RESERVE_SIZE_VECTOR;
-  int multiplo = 1;
-  particelle_file.reserve(size_vector*multiplo);
-#endif
-
-  std::ifstream in(fileIN);
-  std::ofstream out(fileOUT);
-
-  char str[DIM_MAX_LINEA];
-  in.getline(str, DIM_MAX_LINEA);
-
-  if (in.fail())
-  {
-    printf("Unable to proceed!\n");
-    in.close();
-    out.close();
-    return;
-  }
-
-  // riportiamo lo stream di lettura all'inizio, la prima riga la leggiamo solo per sapere se c'è qualcosa nel file
-  in.clear();
-  in.seekg(0, std::ios::beg);
-
-  while (1)
-  {
-    if (colbin == 0)	// non bisogna invertire x e z
-    {
-      in >> dati_particella.at(0) >> dati_particella.at(1) >> dati_particella.at(2)
-        >> dati_particella.at(3) >> dati_particella.at(4) >> dati_particella.at(5);
     }
-    else
-    {
-      in >> dati_particella.at(2) >> dati_particella.at(0) >> dati_particella.at(1)
-        >> dati_particella.at(5) >> dati_particella.at(3) >> dati_particella.at(4);
-    }
-    if (in.eof()) break;
-
-    dati_particella[0] *= 1.e-4;		// l'input avviene in cm, non piu' in micrometri
-    dati_particella[1] *= 1.e-4;
-    dati_particella[2] *= 1.e-4;
-    particelle_file.push_back(dati_particella);
-    dimensione_file++;	//utile per dei check se sta crescendo troppo
-
-#ifdef USE_RESERVE
-    if (!(dimensione_file % size_vector))
-    {
-      multiplo++;
-      particelle_file.reserve(size_vector*multiplo);
-    }
-#endif
-  }
-
-
-  for (int i = 0; i < dimensione_file; i++)
-  {
-    out << std::setprecision(7) << std::setiosflags(std::ios::scientific)
-      << particelle_file[i][0] << "\t" << particelle_file[i][1] << "\t" << particelle_file[i][2] << "\t"
-      << particelle_file[i][3] << "\t" << particelle_file[i][4] << "\t" << particelle_file[i][5] << "\t"
-      << particleId << "\t" << weight << "\t" << "0" << "\t"
-      << i + 1 << std::endl;
-  }
-
-
-
-  in.close();
-  out.close();
-
-  std::cout << "\nConvertite " << dimensione_file << " particelle dal vecchio al nuovo formato di Propaga" << std::endl;
-}
-
 
 
 void convert_from_propaga_to_path(char *fileIN, char *fileOUT, double C, double pz_ref, int particleId, double conv_factor, double frequency, double ref_phase)
@@ -1091,7 +1329,7 @@ void convert_from_propaga_to_path(char *fileIN, char *fileOUT, double C, double 
     else temp.id_number = (int)dimensione_file + 1;
 
     particelle_file.push_back(temp);
-    dimensione_file++;	//utile per dei check se sta crescendo troppo
+    dimensione_file++;  //utile per dei check se sta crescendo troppo
 
 #ifdef USE_RESERVE
     if (!(dimensione_file % size_vector))
@@ -1121,7 +1359,7 @@ void convert_from_propaga_to_path(char *fileIN, char *fileOUT, double C, double 
   */
 
   out << "TRAVEL BEAM DATA" << std::endl;
-  //	out << now << std::endl;
+  //  out << now << std::endl;
   out << "01/10/2012              01:00" << std::endl;
   out << pz_ref << "\t!reference momentum (GeV/c)" << std::endl;
   out << ref_phase << "\t!reference phase (rad)" << std::endl;
@@ -1162,9 +1400,7 @@ void convert_from_propaga_to_path(char *fileIN, char *fileOUT, double C, double 
   out.close();
 
   std::cout << "\nConvertite " << dimensione_file << " particelle dal formato ppg al txt di Travel" << std::endl;
-}
-
-
+    }
 
 
 void convert_from_path_to_propaga(char *fileIN, char *fileOUT)
@@ -1177,9 +1413,9 @@ void convert_from_path_to_propaga(char *fileIN, char *fileOUT)
   std::vector <data> particelle_file;
   data temp;
   int colonne_distribuzione_path = 10;
-  //	double average_z = 0.;
+  //  double average_z = 0.;
   double conv_factor = 1.0E2;
-  //	int which_phase = 0;
+  //  int which_phase = 0;
   int number_of_particles;
   double pz_ref, ref_phase, frequency, reference_mass, reference_charge;
   char * trash;
@@ -1252,7 +1488,7 @@ void convert_from_path_to_propaga(char *fileIN, char *fileOUT)
     else std::cout << "Particella " << temp.id_number << " non riconosciuta" << std::endl;
 
     particelle_file.push_back(temp);
-    dimensione_file++;	//utile per controllare che alla fine dimensione_file e number_of_particles coincidano
+    dimensione_file++;  //utile per controllare che alla fine dimensione_file e number_of_particles coincidano
   }
 
   std::cout << "Promised: " << number_of_particles << ", read: " << dimensione_file << " particles" << std::endl;
@@ -1270,8 +1506,6 @@ void convert_from_path_to_propaga(char *fileIN, char *fileOUT)
 
   std::cout << "\nConvertite " << dimensione_file << " particelle dal formato txt di Travel a ppg" << std::endl;
 }
-
-
 
 
 void preproc_bunchfile_find_slowest(char *fileIN, char *fileOUT)
@@ -1330,13 +1564,13 @@ void preproc_bunchfile_find_slowest(char *fileIN, char *fileOUT)
 
   for (int j = 0; j < contaparticelle; j++)
   {
-    for (int i = 0; i < contacolonne; i++)	out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(j).at(i) << "\t";
+    for (int i = 0; i < contacolonne; i++)  out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(j).at(i) << "\t";
     out << std::endl;
   }
 
-  for (int i = 0; i < 5; i++)				out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << ZERO << "\t";
+  for (int i = 0; i < 5; i++)       out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << ZERO << "\t";
   out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << v_inf << "\t";
-  for (int i = 6; i < contacolonne; i++)	out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << ZERO << "\t";
+  for (int i = 6; i < contacolonne; i++)  out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << ZERO << "\t";
   out << std::endl;
 
   in.close();
@@ -1348,7 +1582,6 @@ void preproc_bunchfile_find_slowest(char *fileIN, char *fileOUT)
   else
     std::cout << "\nNon e' stato trovata alcuna particella \"lenta\" in questo file..." << std::endl;
 }
-
 
 
 void postproc_bunchfile_find_minmax(char *fileIN, char *fileOUT, int whichcol)
@@ -1399,7 +1632,7 @@ void postproc_bunchfile_find_minmax(char *fileIN, char *fileOUT, int whichcol)
   double massimo = -2.0e10;
   double delta = 0;
 
-  whichcol--;	// cosi' da poterla utilizzare direttamente per indirizzare l'array
+  whichcol--; // cosi' da poterla utilizzare direttamente per indirizzare l'array
 
   while (1)
   {
@@ -1444,9 +1677,6 @@ void postproc_bunchfile_find_minmax(char *fileIN, char *fileOUT, int whichcol)
 }
 
 
-
-
-
 void postproc_bunchfile_binning_1D(char *fileIN, char *fileOUT, int colbin, int nbins, double low, double high, double weight)
 {
   std::ifstream in(fileIN);
@@ -1476,7 +1706,7 @@ void postproc_bunchfile_binning_1D(char *fileIN, char *fileOUT, int colbin, int 
     return;
   }
 
-  colbin--;	// cosi' che sia valida per usarla direttamente nell'array
+  colbin--; // cosi' che sia valida per usarla direttamente nell'array
 
   if (colbin < 0 || colbin >= contacolonne)
   {
@@ -1494,7 +1724,7 @@ void postproc_bunchfile_binning_1D(char *fileIN, char *fileOUT, int colbin, int 
   if (weight < 0)
   {
     usa_colonna_pesi = true;
-    colonna_peso = (int)(-weight);		// il -1 serve per avere gia' una variabile valida per l'array c++
+    colonna_peso = (int)(-weight);    // il -1 serve per avere gia' una variabile valida per l'array c++
     std::cout << "Uso la colonna #" << colonna_peso << " per i pesi delle particelle" << std::endl;
   }
   colonna_peso--;
@@ -1594,8 +1824,8 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
     return;
   }
 
-  colbin1--;	//per indirizzo array
-  colbin2--;	//per indirizzo array
+  colbin1--;  //per indirizzo array
+  colbin2--;  //per indirizzo array
 
   if (colbin1 < 0 || colbin2 < 0 || colbin1 >= contacolonne || colbin2 >= contacolonne)
   {
@@ -1614,7 +1844,7 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
   if (weight < 0)
   {
     usa_colonna_pesi = true;
-    colonna_peso = (int)((-weight) - 1);	//-1 per indirizzo array
+    colonna_peso = (int)((-weight) - 1);  //-1 per indirizzo array
   }
   if (usa_colonna_pesi && (colonna_peso < 0 || colonna_peso >= contacolonne))
   {
@@ -1686,7 +1916,7 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
       whichbin2_int = (int)(whichbin2 + 1.0);
     }
 
-    //		std::cout << "whichbin1: " << whichbin1_int << ", whichbin2: " << whichbin2_int << std::endl;
+    //    std::cout << "whichbin1: " << whichbin1_int << ", whichbin2: " << whichbin2_int << std::endl;
     if (usa_colonna_pesi) binfilling[whichbin1_int][whichbin2_int] += dati_particella.at(colonna_peso);
     else binfilling[whichbin1_int][whichbin2_int] += weight;
 
@@ -1697,7 +1927,7 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
   minimum2 = lowbin2 - dimbin2;
   maximum2 = lowbin2;
 
-  //	out << std::setprecision(7) << minimum1-dimbin1 << "\t" << minimum1 << "\t" << minimum2-dimbin2 << "\t" << minimum2 << "\t 0" << std::endl;
+  //  out << std::setprecision(7) << minimum1-dimbin1 << "\t" << minimum1 << "\t" << minimum2-dimbin2 << "\t" << minimum2 << "\t 0" << std::endl;
 
   for (int i = 0; i < nbins1 + 3; i++)
   {
@@ -1707,7 +1937,7 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
       minimum2 += dimbin2;
       maximum2 += dimbin2;
     }
-    //		out << std::setprecision(7) << minimum1 << "\t" << maximum1 << "\t" << minimum2 << "\t" << maximum2 << "\t 0" << std::endl;
+    //    out << std::setprecision(7) << minimum1 << "\t" << maximum1 << "\t" << minimum2 << "\t" << maximum2 << "\t 0" << std::endl;
     minimum1 += dimbin1;
     maximum1 += dimbin1;
     minimum2 = lowbin2 - dimbin2;
@@ -1720,8 +1950,6 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
 
   std::cout << "\nBinning 2D concluso sulle colonne x:" << colbin1 + 1 << " ed y:" << colbin2 + 1 << std::endl;
 }
-
-
 
 
 void preproc_energyCut(char* fileIN, char* fileOUT, double C, double meanE, double deltaE, int descrittore)
@@ -1737,7 +1965,7 @@ void preproc_energyCut(char* fileIN, char* fileOUT, double C, double meanE, doub
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  //	printf ("Splitting string \"%s\" into tokens:\n",str);
+  //  printf ("Splitting string \"%s\" into tokens:\n",str);
 
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
@@ -1763,8 +1991,8 @@ void preproc_energyCut(char* fileIN, char* fileOUT, double C, double meanE, doub
   double moltiplicatore_unita_misura = 1.0;
   if (descrittore == 1 || descrittore == 2) mass = MP_G;
   else if (descrittore == 3 || descrittore == 4) mass = ME_G;
-  else if (descrittore == 101 || descrittore == 102) mass = MP_G, moltiplicatore_unita_misura = 1.0E-3;		// da usare se meanE e deltaE in ingresso sono in keV
-  else if (descrittore == 103 || descrittore == 104) mass = ME_G, moltiplicatore_unita_misura = 1.0E-3;		// da usare se meanE e deltaE in ingresso sono in keV
+  else if (descrittore == 101 || descrittore == 102) mass = MP_G, moltiplicatore_unita_misura = 1.0E-3;   // da usare se meanE e deltaE in ingresso sono in keV
+  else if (descrittore == 103 || descrittore == 104) mass = ME_G, moltiplicatore_unita_misura = 1.0E-3;   // da usare se meanE e deltaE in ingresso sono in keV
   else if (descrittore < 0)
   {
     descrittore = -descrittore;
@@ -1774,7 +2002,7 @@ void preproc_energyCut(char* fileIN, char* fileOUT, double C, double meanE, doub
       std::cout << "Colonna non valida" << std::endl;
       return;
     }
-    descrittore--;	//si puo' usare questa variabile nell'indice descrittore
+    descrittore--;  //si puo' usare questa variabile nell'indice descrittore
   }
   else
   {
@@ -1816,7 +2044,7 @@ void preproc_energyCut(char* fileIN, char* fileOUT, double C, double meanE, doub
     if (dati_particella.at(contacolonne) >= (meanE - deltaE) && dati_particella.at(contacolonne) <= (meanE + deltaE))
     {
       particelle_file.push_back(dati_particella);
-      dimensione_file++;	//utile per dei check se sta crescendo troppo
+      dimensione_file++;  //utile per dei check se sta crescendo troppo
     }
 #ifdef USE_RESERVE
     if (!(dimensione_file % size_vector))
@@ -1841,8 +2069,7 @@ void preproc_energyCut(char* fileIN, char* fileOUT, double C, double meanE, doub
 
   std::cout << "\nPreprocessato il file e rimosse le particelle con energia diversa da " << meanE << "MeV ± " << deltaE << "MeV" << std::endl;
 
-}
-
+    }
 
 
 void preproc_energyCutAbove(char* fileIN, char* fileOUT, double C, double minE, int descrittore)
@@ -1889,9 +2116,9 @@ void preproc_energyCutAbove(char* fileIN, char* fileOUT, double C, double minE, 
   int colonna_descrittore = 0;
   if (descrittore == 1 || descrittore == 2) mass = MP_G;
   else if (descrittore == 3 || descrittore == 4) mass = ME_G;
-  else if (descrittore == 101 || descrittore == 102) mass = MP_G, moltiplicatore_unita_misura = 1.0E-3;		// da usare se meanE e deltaE in ingresso sono in keV
-  else if (descrittore == 103 || descrittore == 104) mass = ME_G, moltiplicatore_unita_misura = 1.0E-3;		// da usare se meanE e deltaE in ingresso sono in keV
-  else if (descrittore < 0) { leggi_descrittore = true; colonna_descrittore = -descrittore; colonna_descrittore--; }				// inverto il segno e calo di uno per poterlo usare nell'indicizzazione colonna
+  else if (descrittore == 101 || descrittore == 102) mass = MP_G, moltiplicatore_unita_misura = 1.0E-3;   // da usare se meanE e deltaE in ingresso sono in keV
+  else if (descrittore == 103 || descrittore == 104) mass = ME_G, moltiplicatore_unita_misura = 1.0E-3;   // da usare se meanE e deltaE in ingresso sono in keV
+  else if (descrittore < 0) { leggi_descrittore = true; colonna_descrittore = -descrittore; colonna_descrittore--; }        // inverto il segno e calo di uno per poterlo usare nell'indicizzazione colonna
   else
   {
     std::cout << "Descrittore non valido" << std::endl;
@@ -1946,7 +2173,7 @@ void preproc_energyCutAbove(char* fileIN, char* fileOUT, double C, double minE, 
       if (dati_particella.at(contacolonne) <= (minE))
       {
         particelle_file.push_back(dati_particella);
-        dimensione_file++;	//utile per dei check se sta crescendo troppo
+        dimensione_file++;  //utile per dei check se sta crescendo troppo
       }
     }
     else
@@ -1954,7 +2181,7 @@ void preproc_energyCutAbove(char* fileIN, char* fileOUT, double C, double minE, 
       if (dati_particella.at(contacolonne) >= (minE))
       {
         particelle_file.push_back(dati_particella);
-        dimensione_file++;	//utile per dei check se sta crescendo troppo
+        dimensione_file++;  //utile per dei check se sta crescendo troppo
       }
     }
 #ifdef USE_RESERVE
@@ -1981,16 +2208,15 @@ void preproc_energyCutAbove(char* fileIN, char* fileOUT, double C, double minE, 
   if (below) std::cout << "\nPreprocessato il file e selezionate le particelle con energia inferiore a  " << minE << "MeV" << std::endl;
   else std::cout << "\nPreprocessato il file e selezionate le particelle con energia superiore a  " << minE << "MeV" << std::endl;
 
-}
-
+    }
 
 
 void postproc_split_by_weight(char* fileIN, int colweight)
 {
   std::ifstream in(fileIN);
 
-  //	int64_t dimensione_file = 0;
-  //	int numero_pesi = 0;
+  //  int64_t dimensione_file = 0;
+  //  int numero_pesi = 0;
   int contacolonne = 0;
   char str[DIM_MAX_LINEA];
   char * pch;
@@ -2122,7 +2348,6 @@ void postproc_split_by_weight(char* fileIN, int colweight)
 }
 
 
-
 void postproc_split_p_and_e(char* fileIN, char* fileOUT1, char* fileOUT2)
 {
   std::ifstream in(fileIN);
@@ -2174,7 +2399,7 @@ void postproc_split_p_and_e(char* fileIN, char* fileOUT1, char* fileOUT2)
     for (int i = 0; i < contacolonne; i++) in >> dati_particella.at(i);
     if (in.eof()) break;
 
-    dimensione_file++;	//utile per dei check se sta crescendo troppo
+    dimensione_file++;  //utile per dei check se sta crescendo troppo
     particelle_file.push_back(dati_particella);
 
 #ifdef USE_RESERVE
@@ -2192,8 +2417,8 @@ void postproc_split_p_and_e(char* fileIN, char* fileOUT1, char* fileOUT2)
   {
     if ((particelle_file[i][6] > 0.9 && particelle_file[i][6] < 1.1) || (particelle_file[i][6] > -0.1 && particelle_file[i][6] < 0.1))
     {
-      for (int j = 0; j < 3; j++)	out_p << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
-      for (int j = 3; j < 6; j++)	out_p << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
+      for (int j = 0; j < 3; j++) out_p << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
+      for (int j = 3; j < 6; j++) out_p << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
       out_p << (int)(particelle_file[i][6]) << "\t";
       out_p << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][7] << "\t";
       out_p << (int)(particelle_file[i][8]) << "\t";
@@ -2202,8 +2427,8 @@ void postproc_split_p_and_e(char* fileIN, char* fileOUT1, char* fileOUT2)
     }
     else if (particelle_file[i][6] > 2.9 && particelle_file[i][6] < 3.1)
     {
-      for (int j = 0; j < 3; j++)	out_e << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
-      for (int j = 3; j < 6; j++)	out_e << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
+      for (int j = 0; j < 3; j++) out_e << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
+      for (int j = 3; j < 6; j++) out_e << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][j] << "\t";
       out_e << (int)(particelle_file[i][6]) << "\t";
       out_e << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i][7] << "\t";
       out_e << (int)(particelle_file[i][8]) << "\t";
@@ -2218,7 +2443,7 @@ void postproc_split_p_and_e(char* fileIN, char* fileOUT1, char* fileOUT2)
   out_e.close();
 
   std::cout << "\nSeparati i " << numero_protoni << " protoni dai " << numero_elettroni << " elettroni nei due files prodotti" << std::endl;
-}
+    }
 
 
 void preproc_angularCut(char* fileIN, char* fileOUT, double angleMin, double angleMax)
@@ -2274,7 +2499,7 @@ void preproc_angularCut(char* fileIN, char* fileOUT, double angleMin, double ang
 
   for (int i = 0; i < contaparticelle; i++)
   {
-    for (int j = 0; j < contacolonne; j++)	out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
+    for (int j = 0; j < contacolonne; j++)  out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
     out << std::endl;
   }
 
@@ -2284,6 +2509,7 @@ void preproc_angularCut(char* fileIN, char* fileOUT, double angleMin, double ang
   std::cout << "\nPreprocessato il file e rimosse le particelle con angolo di apertura superiore a " << angleMax << " mrad" << std::endl;
 
 }
+
 
 void postproc_full_angle_and_energy(char* fileIN, char* fileOUT, double C, int colpx, int colpy, int colpz, int coltype, int colweight)
 {
@@ -2298,7 +2524,7 @@ void postproc_full_angle_and_energy(char* fileIN, char* fileOUT, double C, int c
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  //	printf ("Splitting string \"%s\" into tokens:\n",str);
+  //  printf ("Splitting string \"%s\" into tokens:\n",str);
 
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
@@ -2359,16 +2585,16 @@ void postproc_full_angle_and_energy(char* fileIN, char* fileOUT, double C, int c
     }
     else if (coltype == -4 || coltype == -3) mass = ME_G;
     else if (coltype == -2 || coltype == -1) mass = MP_G;
-    else mass = MP_G;		// storicamente di default andiamo sui protoni
+    else mass = MP_G;   // storicamente di default andiamo sui protoni
 
     dati_particella.at(contacolonne) = atan(sqrt((dati_particella.at(colpx)*dati_particella.at(colpx) / pz2) + (dati_particella.at(colpy)*dati_particella.at(colpy) / pz2)));
     dati_particella.at(contacolonne + 1) = atan(dati_particella.at(colpx) / dati_particella.at(colpz));
     dati_particella.at(contacolonne + 2) = atan(dati_particella.at(colpy) / dati_particella.at(colpz));
     dati_particella.at(contacolonne + 3) = 2 * M_PI*(1.0 - cos(dati_particella.at(contacolonne)));
-    dati_particella.at(contacolonne) *= 1000.;	// from rad to mrad
-    dati_particella.at(contacolonne + 1) *= 1000.;	// from rad to mrad
-    dati_particella.at(contacolonne + 2) *= 1000.;	// from rad to mrad
-    dati_particella.at(contacolonne + 3) *= 1000.;	// from srad to msr
+    dati_particella.at(contacolonne) *= 1000.;  // from rad to mrad
+    dati_particella.at(contacolonne + 1) *= 1000.;  // from rad to mrad
+    dati_particella.at(contacolonne + 2) *= 1000.;  // from rad to mrad
+    dati_particella.at(contacolonne + 3) *= 1000.;  // from srad to msr
     //E = (DA_ERG_A_MEV) * (gamma-1) * massaP * c^2
     dati_particella.at(contacolonne + 4) = DA_ERG_A_MEV * (sqrt(1.0 + dati_particella.at(colpx)*dati_particella.at(colpx) + dati_particella.at(colpy)*dati_particella.at(colpy) + dati_particella.at(colpz)*dati_particella.at(colpz)) - 1.0) * mass * C * C;
     particelle_file.push_back(dati_particella);
@@ -2376,8 +2602,8 @@ void postproc_full_angle_and_energy(char* fileIN, char* fileOUT, double C, int c
 
   for (int i = 0; i < dimensione_file; i++)
   {
-    if (coltype >= 0 && colweight != -1)				out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i].at(coltype) << "\t" << particelle_file[i].at(colweight) << "\t";
-    else												out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << -coltype << "\t" << -colweight << "\t";
+    if (coltype >= 0 && colweight != -1)        out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i].at(coltype) << "\t" << particelle_file[i].at(colweight) << "\t";
+    else                        out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << -coltype << "\t" << -colweight << "\t";
     for (int j = contacolonne; j < contacolonne + 5; j++) out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file[i].at(j) << "\t";
     out << std::endl;
   }
@@ -2387,7 +2613,6 @@ void postproc_full_angle_and_energy(char* fileIN, char* fileOUT, double C, int c
 
   std::cout << "\nProcessato il file e prodotto il file contenente l'angolo piano, l'angolo solido e l'energia" << std::endl;
 }
-
 
 
 void postproc_xyzE(char* fileIN, char* fileOUT, double C, int colpx, int colpy, int colpz, int coltype)
@@ -2403,7 +2628,7 @@ void postproc_xyzE(char* fileIN, char* fileOUT, double C, int colpx, int colpy, 
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  //	printf ("Splitting string \"%s\" into tokens:\n",str);
+  //  printf ("Splitting string \"%s\" into tokens:\n",str);
 
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
@@ -2461,7 +2686,7 @@ void postproc_xyzE(char* fileIN, char* fileOUT, double C, int colpx, int colpy, 
     }
     else if (coltype == -4 || coltype == -3) mass = ME_G;
     else if (coltype == -2 || coltype == -1) mass = MP_G;
-    else mass = MP_G;		// storicamente di default andiamo sui protoni
+    else mass = MP_G;   // storicamente di default andiamo sui protoni
 
     dati_particella.at(contacolonne) = DA_ERG_A_MEV * (sqrt(1.0 + dati_particella.at(colpx)*dati_particella.at(colpx) + dati_particella.at(colpy)*dati_particella.at(colpy) + dati_particella.at(colpz)*dati_particella.at(colpz)) - 1.0) * mass * C * C;
     particelle_file.push_back(dati_particella);
@@ -2481,7 +2706,6 @@ void postproc_xyzE(char* fileIN, char* fileOUT, double C, int colpx, int colpy, 
 }
 
 
-
 void postproc_removeLostParticles(char *fileIN, char* fileOUT, int colstatus)
 {
   std::ifstream in(fileIN);
@@ -2495,7 +2719,7 @@ void postproc_removeLostParticles(char *fileIN, char* fileOUT, int colstatus)
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  //	printf ("Splitting string \"%s\" into tokens:\n",str);
+  //  printf ("Splitting string \"%s\" into tokens:\n",str);
 
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
@@ -2517,7 +2741,7 @@ void postproc_removeLostParticles(char *fileIN, char* fileOUT, int colstatus)
   std::vector<double> dati_particella(contacolonne, 0);
   std::vector<std::vector <double> > particelle_file;
 
-  colstatus--;	// so that it can be used with the array index
+  colstatus--;  // so that it can be used with the array index
   if (colstatus < 0 || colstatus >= contacolonne)
   {
     std::cout << "Colonna stato particella non trovata" << std::endl;
@@ -2540,7 +2764,7 @@ void postproc_removeLostParticles(char *fileIN, char* fileOUT, int colstatus)
 
   for (int i = 0; i < contaparticelle; i++)
   {
-    for (int j = 0; j < contacolonne; j++)	out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
+    for (int j = 0; j < contacolonne; j++)  out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
     out << std::endl;
   }
 
@@ -2564,7 +2788,7 @@ void preproc_subsample(char *fileIN, char* fileOUT, int jump)
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  //	printf ("Splitting string \"%s\" into tokens:\n",str);
+  //  printf ("Splitting string \"%s\" into tokens:\n",str);
 
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
@@ -2601,7 +2825,7 @@ void preproc_subsample(char *fileIN, char* fileOUT, int jump)
 
   for (std::vector<double>::size_type i = 0; i < particelle_file.size(); i++)
   {
-    for (int j = 0; j < contacolonne; j++)	out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
+    for (int j = 0; j < contacolonne; j++)  out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
     out << std::endl;
   }
 
@@ -2625,7 +2849,7 @@ void postproc_removeParticlesGoneToInfinity(char *fileIN, char* fileOUT)
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  //	printf ("Splitting string \"%s\" into tokens:\n",str);
+  //  printf ("Splitting string \"%s\" into tokens:\n",str);
 
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
@@ -2662,7 +2886,7 @@ void postproc_removeParticlesGoneToInfinity(char *fileIN, char* fileOUT)
 
   for (std::vector<double>::size_type i = 0; i < particelle_file.size(); i++)
   {
-    for (int j = 0; j < contacolonne; j++)	out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
+    for (int j = 0; j < contacolonne; j++)  out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
     out << std::endl;
   }
 
@@ -2687,7 +2911,7 @@ void from_ppg_to_vtk(char* fileIN, char* fileOUT)
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  //	printf ("Splitting string \"%s\" into tokens:\n",str);
+  //  printf ("Splitting string \"%s\" into tokens:\n",str);
 
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
@@ -2723,7 +2947,7 @@ void from_ppg_to_vtk(char* fileIN, char* fileOUT)
 
   for (int i = 0; i < contaparticelle; i++)
   {
-    for (int j = 0; j < 3; j++)	out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
+    for (int j = 0; j < 3; j++) out << std::setprecision(7) << std::setiosflags(std::ios::scientific) << particelle_file.at(i).at(j) << "\t";
     out << std::endl;
   }
 
@@ -2735,8 +2959,6 @@ void from_ppg_to_vtk(char* fileIN, char* fileOUT)
 
 
 }
-
-
 
 
 
@@ -2773,6 +2995,9 @@ int main(int argc, char *argv[])
       << "\n43=split_by_weight [colweight]"
       << "\n44=remove_transverse_momentum"
       << "\n45=write_x_y_z_E"
+      << "\n46=from_propaga_to_dst"
+      << "\n47=from_dst_to_ascii"
+      << "\n48=from_plt_to_ascii"
       << "\ninput_file"
       << std::endl;
     return -254;
@@ -2833,6 +3058,9 @@ int main(int argc, char *argv[])
       std::cout << "43- Separare le particelle in files distinti in base al loro peso" << std::endl;
       std::cout << "44- Rimuovere gli impulsi trasversi dalla distribuzione" << std::endl;
       std::cout << "45- Creare un file con x, y, z, E" << std::endl;
+      std::cout << "46- Convertire un file Propaga in un file binario .dst" << std::endl;
+      std::cout << "47- Convertire un file binario .dst in ascii" << std::endl;
+      std::cout << "48- Convertire un file binario .plt in ascii" << std::endl;
 
       std::cout << ": ";
       std::cin >> flow;
@@ -2861,7 +3089,7 @@ int main(int argc, char *argv[])
         }
         std::cout << "Il valore usato di c e' " << C << std::endl;
         std::cout << "Non usare file contenenti la particella lenta di riferimento! Nel caso, eliminarla prima di procedere!" << std::endl;
-        convert_from_Propaga_to_Astra(argv[2], output_file, C);
+        convert_from_propaga_to_astra(argv[2], output_file, C);
       }
       else if (flow == 2)
       {
@@ -2888,9 +3116,9 @@ int main(int argc, char *argv[])
         std::cout << "Il valore usato di c e' " << C << std::endl;
         std::cout << "dimmi il peso delle particelle: " << std::endl;
         std::cin >> weight;
-        convert_from_Astra_to_Propaga(argv[2], output_file, C, weight);
+        convert_from_astra_to_propaga(argv[2], output_file, C, weight);
       }
-      else if (flow == 3)	preproc_bunchfile_find_slowest(argv[2], output_file);
+      else if (flow == 3) preproc_bunchfile_find_slowest(argv[2], output_file);
       else if (flow == 4) postproc_removeParticlesGoneToInfinity(argv[2], output_file);
       else if (flow == 8) from_ppg_to_vtk(argv[2], output_file);
       else if (flow == 9)
@@ -2969,7 +3197,7 @@ int main(int argc, char *argv[])
         std::cout << "Il valore usato di c e' " << C << std::endl;
         std::cout << "dimmi il pz della particella di riferimento: " << std::endl;
         std::cin >> pzref;
-        convert_from_Propaga_to_Astra_fixed(argv[2], output_file, C, pzref);
+        convert_from_propaga_to_astra_fixed(argv[2], output_file, C, pzref);
       }
       else if (flow == 28)
       {
@@ -3108,7 +3336,7 @@ int main(int argc, char *argv[])
         std::cout << "Dimmi quanti bin fare: ";
         std::cin >> nbins2;
         std::cout << "Dimmi il valore minimo: ";
-        std::cin >> angleMin;	//riciclo la variabile angleMin/Max
+        std::cin >> angleMin; //riciclo la variabile angleMin/Max
         std::cout << "Dimmi il valore massimo: ";
         std::cin >> angleMax;
         std::cout << "Dimmi peso delle particelle (con un - davanti la colonna dove trovarlo): ";
@@ -3134,9 +3362,9 @@ int main(int argc, char *argv[])
       {
         C = 29979245800.0;
         std::cout << "Dimmi la colonna dei px normalizzati: ";
-        std::cin >> colbin;	// riciclo variabile, nome variabile non affidabile per contenuto!
+        std::cin >> colbin; // riciclo variabile, nome variabile non affidabile per contenuto!
         std::cout << "Dimmi la colonna dei py normalizzati: ";
-        std::cin >> nbins;	// riciclo variabile
+        std::cin >> nbins;  // riciclo variabile
         std::cout << "Dimmi la colonna dei pz normalizzati: ";
         std::cin >> colbin2;
         std::cout << "Dimmi la colonna nella quale si specifica il tipo di particella" << std::endl;
@@ -3168,9 +3396,9 @@ int main(int argc, char *argv[])
       {
         C = 29979245800.0;
         std::cout << "Dimmi la colonna dei px normalizzati: ";
-        std::cin >> colbin;	// riciclo variabile, nome variabile non affidabile per contenuto!
+        std::cin >> colbin; // riciclo variabile, nome variabile non affidabile per contenuto!
         std::cout << "Dimmi la colonna dei py normalizzati: ";
-        std::cin >> nbins;	// riciclo variabile
+        std::cin >> nbins;  // riciclo variabile
         std::cout << "Dimmi la colonna dei pz normalizzati: ";
         std::cin >> colbin2;
         std::cout << "Dimmi la colonna nella quale si specifica il tipo di particella" << std::endl;
@@ -3179,6 +3407,25 @@ int main(int argc, char *argv[])
         std::cout << "-3 per elettroni e -4 per antielettroni: ";
         std::cin >> nbins2;
         postproc_xyzE(argv[2], output_file, C, colbin, nbins, colbin2, nbins2);
+      }
+      else if (flow == 46)
+      {
+        C = 29979245800.0;
+        std::cout << "Dimmi la frequenza di riferimento: ";
+        std::cin >> frequency;
+        std::cout << "Dimmi la corrente di riferimento: ";
+        std::cin >> ref_phase;  // riciclo variabile
+        convert_from_propaga_to_binary_dst(argv[2], output_file, C, frequency, ref_phase);
+      }
+      else if (flow == 47)
+      {
+        C = 29979245800.0;
+        convert_from_binary_dst_to_ascii(argv[2], output_file, C);
+      }
+      else if (flow == 48)
+      {
+        C = 29979245800.0;
+        convert_from_binary_plt_to_ascii(argv[2], output_file, C);
       }
 
       else std::cout << "Scelta non valida!" << std::endl;
@@ -3196,11 +3443,11 @@ int main(int argc, char *argv[])
       {
       case 1:
         std::cout << "Non usare file contenenti la particella lenta di riferimento! Nel caso, eliminarla prima di procedere!" << std::endl;
-        convert_from_Propaga_to_Astra(argv[4], output_file, C);
+        convert_from_propaga_to_astra(argv[4], output_file, C);
         break;
       case 2:
         weight = atof(argv[5]);
-        convert_from_Astra_to_Propaga(argv[4], output_file, C, weight);
+        convert_from_astra_to_propaga(argv[4], output_file, C, weight);
         break;
       case 3:
         preproc_bunchfile_find_slowest(argv[4], output_file);
@@ -3233,7 +3480,7 @@ int main(int argc, char *argv[])
         break;
       case 26:
         pzref = atof(argv[5]);
-        convert_from_Propaga_to_Astra_fixed(argv[4], output_file, C, pzref);
+        convert_from_propaga_to_astra_fixed(argv[4], output_file, C, pzref);
       case 28:
         std::cout << "Se non hai messo C = 29979245800 (cm/s) occhio che forse non funziona!" << std::endl;
         meanE = atof(argv[5]);
@@ -3290,7 +3537,7 @@ int main(int argc, char *argv[])
         highbin = atof(argv[8]);
         colbin2 = atoi(argv[9]);
         nbins2 = atoi(argv[10]);
-        angleMin = atof(argv[11]);	//riciclo la variabile angleMin/Max
+        angleMin = atof(argv[11]);  //riciclo la variabile angleMin/Max
         angleMax = atof(argv[12]);
         weight = atof(argv[13]);
         postproc_bunchfile_binning_2D(argv[4], output_file, colbin, nbins, lowbin, highbin, colbin2, nbins2, angleMin, angleMax, weight);
@@ -3304,29 +3551,43 @@ int main(int argc, char *argv[])
         postproc_bunchfile_binning_1D(argv[4], output_file, colbin, nbins, lowbin, highbin, weight);
         break;
       case 41:
-        colbin = atoi(argv[5]);		// colonna px	// variabili riciclate, non c'entrano niente col loro significato
-        nbins = atoi(argv[6]);		// colonna py
-        colbin2 = atoi(argv[7]);	// colonna pz
-        nbins2 = atoi(argv[8]);		// colonna tipo particelle (negativo lo imposta manualmente a tutte)
-        colweight = atoi(argv[9]);	// colonna peso particelle
+        colbin = atoi(argv[5]);   // colonna px // variabili riciclate, non c'entrano niente col loro significato
+        nbins = atoi(argv[6]);    // colonna py
+        colbin2 = atoi(argv[7]);  // colonna pz
+        nbins2 = atoi(argv[8]);   // colonna tipo particelle (negativo lo imposta manualmente a tutte)
+        colweight = atoi(argv[9]);  // colonna peso particelle
         postproc_full_angle_and_energy(argv[4], output_file, C, colbin, nbins, colbin2, nbins2, colweight);
         break;
       case 42:
         convert_from_jasmine(argv[4], output_file);
         break;
       case 43:
-        colweight = atoi(argv[5]);	// colonna peso particelle
+        colweight = atoi(argv[5]);  // colonna peso particelle
         postproc_split_by_weight(argv[4], colweight);
         break;
       case 44:
         preproc_nullify_transverse_momentum(argv[4], output_file);
         break;
       case 45:
-        colbin = atoi(argv[5]);		// colonna px	// variabili riciclate, non c'entrano niente col loro significato
-        nbins = atoi(argv[6]);		// colonna py
-        colbin2 = atoi(argv[7]);	// colonna pz
-        nbins2 = atoi(argv[8]);		// colonna tipo particelle (negativo lo imposta manualmente a tutte)
+        colbin = atoi(argv[5]);   // colonna px // variabili riciclate, non c'entrano niente col loro significato
+        nbins = atoi(argv[6]);    // colonna py
+        colbin2 = atoi(argv[7]);  // colonna pz
+        nbins2 = atoi(argv[8]);   // colonna tipo particelle (negativo lo imposta manualmente a tutte)
         postproc_xyzE(argv[4], output_file, C, colbin, nbins, colbin2, nbins2);
+        break;
+      case 46:
+        C = 29979245800.0;
+        frequency = atof(argv[5]);
+        ref_phase = atof(argv[6]);  // riciclo variabile
+        convert_from_propaga_to_binary_dst(argv[4], output_file, C, frequency, ref_phase);
+        break;
+      case 47:
+        C = 29979245800.0;
+        convert_from_binary_dst_to_ascii(argv[4], output_file, C);
+        break;
+      case 48:
+        C = 29979245800.0;
+        convert_from_binary_plt_to_ascii(argv[4], output_file, C);
         break;
       default:
         std::cout << "Modo automatico non valido" << std::endl;

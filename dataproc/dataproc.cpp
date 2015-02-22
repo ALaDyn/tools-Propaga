@@ -32,7 +32,6 @@ along with tools-Propaga. If not, see <http://www.gnu.org/licenses/>.
 #include <cstring>
 #include <string>
 #include <cstdlib>  // for atoi
-#include <cassert>  // for assert
 #include <vector>
 
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
@@ -41,11 +40,11 @@ along with tools-Propaga. If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 
-#define MP_EV				938272013.0		// proton mass [eV / c^2]
-#define C					2.99792458e+10	// light speed [cm / s] (direttamente da Propaga)
-//#define C					299792458.0		// light speed [m / s]
-#define DIM_MAX_LINEA		1024
-#define NUMERO_PARAMETRI	19
+#define MP_EV       938272013.0   // proton mass [eV / c^2]
+#define C         2.99792458e+10  // light speed [cm / s] (direttamente da Propaga)
+//#define C         299792458.0   // light speed [m / s]
+#define DIM_MAX_LINEA   1024
+#define NUMERO_PARAMETRI  19
 
 
 
@@ -410,11 +409,11 @@ int main(int argc, char *argv[])
 
     while (1)
     {
-      //			DEFINIZIONE FILE emitt.ppg direttamente da Propaga
-      //			emitt_file << j << " : " << massime << "\t" << (lattice->dimmi_quante_sono_vive()) << "\t" 
-      //					   << weightTot << "\t" << x_sum << "\t" << x2_sum << "\t" << y_sum << "\t" << y2_sum << "\t" << z_sum << "\t" << z2_sum << "\t" 
-      //					   << px_sum << "\t" << px2_sum << "\t" << py_sum << "\t" << py2_sum << "\t " << pz_sum << "\t" << pz2_sum << "\t" 
-      //					   << xvx_sum << "\t" << yvy_sum << "\t" << zvz_sum << std::endl;
+      //DEFINIZIONE FILE emitt.ppg direttamente da Propaga
+      //  emitt_file << j << " : " << massime << "\t" << (lattice->dimmi_quante_sono_vive()) << "\t"
+      //  << weightTot << "\t" << x_sum << "\t" << x2_sum << "\t" << y_sum << "\t" << y2_sum << "\t" << z_sum << "\t" << z2_sum << "\t"
+      //  << px_sum << "\t" << px2_sum << "\t" << py_sum << "\t" << py2_sum << "\t " << pz_sum << "\t" << pz2_sum << "\t"
+      //  << xvx_sum << "\t" << yvy_sum << "\t" << zvz_sum << std::endl;
       inputFile >> emitt_param[0] >> skip >> emitt_param[1] >> emitt_param[17] >> emitt_param[18] >> emitt_param[2] >> emitt_param[3] >> emitt_param[4] >> emitt_param[5] >> emitt_param[6] >> emitt_param[7]
         >> emitt_param[8] >> emitt_param[9] >> emitt_param[10] >> emitt_param[11] >> emitt_param[12] >> emitt_param[13] >> emitt_param[14] >> emitt_param[15] >> emitt_param[16];
 
@@ -440,40 +439,40 @@ int main(int argc, char *argv[])
         continue;
       }
 
-      emitt_calc[1] = emitt_timestep[ii][3] / emitt_timestep[ii][18];		// x2_mean  = x2_sum  / weightTot;
-      emitt_calc[3] = emitt_timestep[ii][9] / emitt_timestep[ii][18];		// px2_mean = px2_sum / weightTot;
-      emitt_calc[4] = emitt_timestep[ii][14] / emitt_timestep[ii][18];		// xvx_mean = xvx_sum / weightTot;
+      emitt_calc[1] = emitt_timestep[ii][3] / emitt_timestep[ii][18];   // x2_mean  = x2_sum  / weightTot;
+      emitt_calc[3] = emitt_timestep[ii][9] / emitt_timestep[ii][18];   // px2_mean = px2_sum / weightTot;
+      emitt_calc[4] = emitt_timestep[ii][14] / emitt_timestep[ii][18];    // xvx_mean = xvx_sum / weightTot;
 
-      emitt_calc[6] = emitt_timestep[ii][5] / emitt_timestep[ii][18];		// y2_mean  = y2_sum  / weightTot;
-      emitt_calc[8] = emitt_timestep[ii][11] / emitt_timestep[ii][18];		// py2_mean = py2_sum / weightTot;
-      emitt_calc[9] = emitt_timestep[ii][15] / emitt_timestep[ii][18];		// yvy_mean = yvy_sum / weightTot;
+      emitt_calc[6] = emitt_timestep[ii][5] / emitt_timestep[ii][18];   // y2_mean  = y2_sum  / weightTot;
+      emitt_calc[8] = emitt_timestep[ii][11] / emitt_timestep[ii][18];    // py2_mean = py2_sum / weightTot;
+      emitt_calc[9] = emitt_timestep[ii][15] / emitt_timestep[ii][18];    // yvy_mean = yvy_sum / weightTot;
 
-      emitt_calc[10] = emitt_timestep[ii][6] / emitt_timestep[ii][18];		// z_mean   = z_sum   / weightTot;
-      emitt_calc[11] = emitt_timestep[ii][7] / emitt_timestep[ii][18];		// z2_mean  = z2_sum  / weightTot;
-      emitt_calc[13] = emitt_timestep[ii][13] / emitt_timestep[ii][18];		// pz2_mean = pz2_sum / weightTot;
-      emitt_calc[14] = emitt_timestep[ii][16] / emitt_timestep[ii][18];		// zvz_mean = zvz_sum / weightTot;
+      emitt_calc[10] = emitt_timestep[ii][6] / emitt_timestep[ii][18];    // z_mean   = z_sum   / weightTot;
+      emitt_calc[11] = emitt_timestep[ii][7] / emitt_timestep[ii][18];    // z2_mean  = z2_sum  / weightTot;
+      emitt_calc[13] = emitt_timestep[ii][13] / emitt_timestep[ii][18];   // pz2_mean = pz2_sum / weightTot;
+      emitt_calc[14] = emitt_timestep[ii][16] / emitt_timestep[ii][18];   // zvz_mean = zvz_sum / weightTot;
 
       emitt_calc[15] = sqrt(emitt_calc[1]);
-      //			emitt_calc[15] = emitt_calc[1]  - emitt_calc[0] *emitt_calc[0];			// sigma_x   = x2_mean - x_mean*x_mean;
+      //      emitt_calc[15] = emitt_calc[1]  - emitt_calc[0] *emitt_calc[0];     // sigma_x   = x2_mean - x_mean*x_mean;
       emitt_calc[16] = sqrt(emitt_calc[6]);
-      //			emitt_calc[16] = emitt_calc[6]  - emitt_calc[5] *emitt_calc[5];			// sigma_y   = y2_mean - y_mean*y_mean;
+      //      emitt_calc[16] = emitt_calc[6]  - emitt_calc[5] *emitt_calc[5];     // sigma_y   = y2_mean - y_mean*y_mean;
       emitt_calc[17] = sqrt(emitt_calc[11]);
-      //			emitt_calc[17] = emitt_calc[11] - emitt_calc[10]*emitt_calc[10];		// sigma_z   = z2_mean - z_mean*z_mean;
+      //      emitt_calc[17] = emitt_calc[11] - emitt_calc[10]*emitt_calc[10];    // sigma_z   = z2_mean - z_mean*z_mean;
       emitt_calc[18] = sqrt(emitt_calc[3]);
-      //			emitt_calc[18] = emitt_calc[3]  - emitt_calc[2] *emitt_calc[2];			// sigma_px  = px2_mean - px_mean * px_mean;
+      //      emitt_calc[18] = emitt_calc[3]  - emitt_calc[2] *emitt_calc[2];     // sigma_px  = px2_mean - px_mean * px_mean;
       emitt_calc[19] = sqrt(emitt_calc[8]);
-      //			emitt_calc[19] = emitt_calc[8]  - emitt_calc[7] *emitt_calc[7];			// sigma_py  = py2_mean - py_mean * py_mean;
+      //      emitt_calc[19] = emitt_calc[8]  - emitt_calc[7] *emitt_calc[7];     // sigma_py  = py2_mean - py_mean * py_mean;
       emitt_calc[20] = sqrt(emitt_calc[13]);
-      //			emitt_calc[20] = emitt_calc[13] - emitt_calc[12]*emitt_calc[12];		// sigma_pz  = pz2_mean - pz_mean * pz_mean;
+      //      emitt_calc[20] = emitt_calc[13] - emitt_calc[12]*emitt_calc[12];    // sigma_pz  = pz2_mean - pz_mean * pz_mean;
 
-      emitt_calc[27] = emitt_timestep[ii][1];									// double counter (# particelle totali)
-      emitt_calc[28] = emitt_timestep[ii][17];								// double vive (# particelle vive)
-      emitt_calc[29] = emitt_timestep[ii][18];								// double weightTot (peso totale particelle vive)
+      emitt_calc[27] = emitt_timestep[ii][1];                 // double counter (# particelle totali)
+      emitt_calc[28] = emitt_timestep[ii][17];                // double vive (# particelle vive)
+      emitt_calc[29] = emitt_timestep[ii][18];                // double weightTot (peso totale particelle vive)
 
       // calcolo emittanze
-      //			epsilon_x = x2_mean * px2_mean - xvx_mean*xvx_mean;
-      //			epsilon_y = y2_mean * py2_mean - yvy_mean*yvy_mean;
-      //			epsilon_z = z2_mean * pz2_mean - zvz_mean*zvz_mean;
+      //      epsilon_x = x2_mean * px2_mean - xvx_mean*xvx_mean;
+      //      epsilon_y = y2_mean * py2_mean - yvy_mean*yvy_mean;
+      //      epsilon_z = z2_mean * pz2_mean - zvz_mean*zvz_mean;
       emitt_calc[24] = emitt_calc[1] * emitt_calc[3] - emitt_calc[4] * emitt_calc[4];
       emitt_calc[25] = emitt_calc[6] * emitt_calc[8] - emitt_calc[9] * emitt_calc[9];
       emitt_calc[26] = emitt_calc[11] * emitt_calc[13] - emitt_calc[14] * emitt_calc[14];
@@ -540,7 +539,7 @@ int main(int argc, char *argv[])
 
   else if (somethingDone == 2)
   {
-    //		selectedData << "Nome file\tNumero particelle\tNumero step\tct (cm)\tmean z (cm)\tsigma x\tepsilon x\tsigma y\tepsilon y\tsigma z\tepsilon z" << std::endl;
+    //selectedData << "Nome file\tNumero particelle\tNumero step\tct (cm)\tmean z (cm)\tsigma x\tepsilon x\tsigma y\tepsilon y\tsigma z\tepsilon z" << std::endl;
     selectedData << argv[1] << ":\t" << counter << "\t" << counterTotal << "\t" << Numerostep << "\t" << std::setprecision(7) << std::setiosflags(std::ios::scientific)
       << timestep << "\t" << z_mean << "\t" << sigma_x << "\t" << epsilon_x << "\t" << sigma_y << "\t" << epsilon_y << "\t" << sigma_z << "\t"
       << epsilon_z << std::endl;
@@ -554,16 +553,16 @@ int main(int argc, char *argv[])
       selectedData
       << Numero step                  //  1^ colonna
       << ":"                          //  2^ colonna
-      << Numero particelle tot		    //  3^ colonna
-      << Numero particelle vive		    //  4^ colonna
-      << Peso totale particelle vive	//  5^ colonna
+      << Numero particelle tot        //  3^ colonna
+      << Numero particelle vive       //  4^ colonna
+      << Peso totale particelle vive  //  5^ colonna
       << mean z (cm)                  //  6^ colonna
       << envelope x                   //  7^ colonna
-      << epsilon x					          //  8^ colonna
-      << envelope y					          //  9^ colonna
-      << epsilon y					          // 10^ colonna
-      << envelope z					          // 11^ colonna
-      << epsilon z					          // 12^ colonna
+      << epsilon x                    //  8^ colonna
+      << envelope y                   //  9^ colonna
+      << epsilon y                    // 10^ colonna
+      << envelope z                   // 11^ colonna
+      << epsilon z                    // 12^ colonna
       */
       selectedData << (kk + 1)*Numerostep << "\t:\t" << (int)emitt_calc_timestep[kk][27] << "\t" << (int)emitt_calc_timestep[kk][28] << "\t"
         << std::setprecision(7) << std::setiosflags(std::ios::scientific) << emitt_calc_timestep[kk][29] << "\t"
