@@ -1,5 +1,5 @@
 COMPILER = g++
-OPT = -O3 -std=c++0x
+OPT = -O3 -std=c++11
 
 dataproc_exe = dataproc/dataproc
 converter_exe = converter/converter

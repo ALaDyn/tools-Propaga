@@ -66,6 +66,10 @@ some special codes also exists, when energies in that contest are written in keV
 #pragma warning(disable : 981)
 #endif
 
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#endif
+
 
 // #define RESERVE_SIZE_VECTOR 10000
 #ifdef RESERVE_SIZE_VECTOR
