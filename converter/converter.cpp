@@ -469,7 +469,7 @@ void convert_from_binary_dst_to_ascii(char *fileIN, char *fileOUT, double C)
   in.read((char*)&curr, sizeof(double));
   in.read((char*)&freq, sizeof(double));
   in.read(&(support_char[0]), 1 * sizeof(char));
-  std::vector<std::vector<double>> particelle_file(np, std::vector<double>(ncol_dst, 0));
+  std::vector< std::vector<double> > particelle_file(np, std::vector<double>(ncol_dst, 0));
   in.read((char*)&(particelle_file[0]), np * ncol_dst * sizeof(double));
   in.read((char*)&mc2, sizeof(double));
 
