@@ -1,5 +1,5 @@
 COMPILER = g++
-OPT = -O3 -std=c++11
+OPT = -O3 -std=c++0x
 
 dataproc_exe = dataproc/dataproc
 converter_exe = converter/converter
@@ -8,8 +8,8 @@ SRC1 = dataproc/dataproc.cpp
 SRC2 = converter/converter.cpp
 
 
-#debug : OPT = -O0 -g -std=c++11 
-#debug : all
+debug : OPT = -O0 -g -std=c++11 
+debug : all
 
 all : dataproc converter
 
@@ -21,5 +21,3 @@ converter : $(SRC2)
 
 clean :
 	rm -f $(dataproc_exe) $(converter_exe) 
-
-
