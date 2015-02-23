@@ -421,30 +421,29 @@ void convert_from_propaga_to_binary_dst(char *fileIN, char *fileOUT, double C, d
   }
 
   int number_of_particles = particelle_file.size();
-  double mc2 = MP_MEV /* *C *C */;
+  double mc2 = MP_MEV; // *C*C ??
 
-  /*
-  A.dst file use a binary format.It contains information of a beam at a given longitudinal position : number of particles, beam current, repetition frequency and rest mass as well as the 6D particles coordinates.The format is the following :
-  2xCHAR + INT(Np) + DOUBLE(Ib(mA)) + DOUBLE(freq(MHz)) + CHAR +
-  Np×[6×DOUBLE(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV))] +
-  DOUBLE(mc2(MeV))
-  Comments :
-  - CHAR is 1 byte long,
-  - INT is 4 bytes long,
-  - DOUBLE is 8 bytes long.
-  - Np is the number of particles,
-  - Ib is the beam current,
-  - freq is the bunch frequency,
-  - mc2 is the particle rest mass.
-  */
+  
+  //A.dst file use a binary format.It contains information of a beam at a given longitudinal position : number of particles, beam current, repetition frequency and rest mass as well as the 6D particles coordinates.The format is the following :
+  //2xCHAR + INT(Np) + DOUBLE(Ib(mA)) + DOUBLE(freq(MHz)) + CHAR +
+  //Np×[6×DOUBLE(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV))] +
+  //DOUBLE(mc2(MeV))
+  //Comments :
+  //- CHAR is 1 byte long,
+  //- INT is 4 bytes long,
+  //- DOUBLE is 8 bytes long.
+  //- Np is the number of particles,
+  //- Ib is the beam current,
+  //- freq is the bunch frequency,
+  //- mc2 is the particle rest mass.
 
   out.write(reinterpret_cast<const char*>(&(support_char[0])), sizeof(support_char) * sizeof(char));
   out.write(reinterpret_cast<const char*>(&number_of_particles), sizeof(number_of_particles) * sizeof(int));
   out.write(reinterpret_cast<const char*>(&freq), sizeof(double));
   out.write(reinterpret_cast<const char*>(&curr), sizeof(double));
   out.write(reinterpret_cast<const char*>(&(support_char[0])), 1 * sizeof(char));
-  std::copy(particelle_file.begin(), particelle_file.end(), std::ostreambuf_iterator<char>(out));
-  //out.write(reinterpret_cast<const char *>(&(particelle_file[0])), sizeof(particelle_file) * sizeof(dati_particella) * sizeof(double));
+  //std::copy(particelle_file.begin(), particelle_file.end(), std::ostreambuf_iterator<char>(out));
+  out.write(reinterpret_cast<const char *>(&(particelle_file[0])), sizeof(particelle_file) * ncol_dst * sizeof(double));
   out.write(reinterpret_cast<const char*>(&mc2), sizeof(double));
 
   in.close();
@@ -475,7 +474,7 @@ void convert_from_binary_dst_to_ascii(char *fileIN, char *fileOUT, double C)
   in.read((char*)&mc2, sizeof(double));
 
   double wavelength = C / freq;
-  std::vector<std::vector<double>> particelle(np, std::vector<double>(ncol_dst, 0));
+  std::vector< std::vector<double> > particelle(np, std::vector<double>(ncol_dst, 0));
 
   for (int i = 0; i < np; i++)
   {
@@ -518,22 +517,21 @@ void convert_from_binary_plt_to_ascii(char *fileIN, char *fileOUT, double C)
   //2xCHAR+INT(Ne)+INT(Np)+DOUBLE(Ib(A))+DOUBLE(freq(MHz))+DOUBLE(mc2(MeV)) +
   // + Ne×[CHAR + INT(Nelp) + DOUBLE(Zgen) + DOUBLE(phase0(deg)) + DOUBLE(wgen(MeV)) + Np×[7×FLOAT(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV), Loss)]]
 
-  /*
-  Comments:
-  - CHAR is 1 byte long,
-  - INT is 4 bytes long,
-  - FLOAT is a Real 4 bytes long.
-  - DOUBLE is a Real 8 bytes long.
-  - Ne is the number of different positions,
-  - Np is the number of particles,
-  - Ib is the beam current,
-  - freq is the bunch frequency,
-  - mc2 is the particle rest mass,
-  - Nelp is the longitudinal element position,
-  - Zgen is the longitudinal position in cm,
-  - Phase0 & wgen are the phase and energy references of the beam
-  - Loss (UNDEFINED in TraceWin Manual - maybe related to a particle lost flag?)
-  */
+  
+  //Comments:
+  //- CHAR is 1 byte long,
+  //- INT is 4 bytes long,
+  //- FLOAT is a Real 4 bytes long.
+  //- DOUBLE is a Real 8 bytes long.
+  //- Ne is the number of different positions,
+  //- Np is the number of particles,
+  //- Ib is the beam current,
+  //- freq is the bunch frequency,
+  //- mc2 is the particle rest mass,
+  //- Nelp is the longitudinal element position,
+  //- Zgen is the longitudinal position in cm,
+  //- Phase0 & wgen are the phase and energy references of the beam
+  //- Loss (UNDEFINED in TraceWin Manual - maybe related to a particle lost flag?)
 
   int npos, ncol_plt = 7;
   std::vector<char> support_char(2, 0);
@@ -552,7 +550,7 @@ void convert_from_binary_plt_to_ascii(char *fileIN, char *fileOUT, double C)
   std::vector<double> zgen(npos, 0);
   std::vector<double> phase0(npos, 0);
   std::vector<double> wgen(npos, 0);
-  std::vector<std::vector<std::vector<double>>> particelle_file(npos, std::vector<std::vector<double> >(np, std::vector<double>(ncol_plt, 0)));
+  std::vector< std::vector< std::vector<double> > > particelle_file(npos, std::vector<std::vector<double> >(np, std::vector<double>(ncol_plt, 0)));
 
   for (int i = 0; i < npos; i++)
   {
@@ -3427,7 +3425,6 @@ int main(int argc, char *argv[])
         C = 29979245800.0;
         convert_from_binary_plt_to_ascii(argv[2], output_file, C);
       }
-
       else std::cout << "Scelta non valida!" << std::endl;
       break;
 
@@ -3575,7 +3572,7 @@ int main(int argc, char *argv[])
         nbins2 = atoi(argv[8]);   // colonna tipo particelle (negativo lo imposta manualmente a tutte)
         postproc_xyzE(argv[4], output_file, C, colbin, nbins, colbin2, nbins2);
         break;
-      case 46:
+        case 46:
         C = 29979245800.0;
         frequency = atof(argv[5]);
         ref_phase = atof(argv[6]);  // riciclo variabile
