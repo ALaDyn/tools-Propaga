@@ -67,7 +67,7 @@ void seleziona(char* file_da_leggere, char* file_da_scrivere, int colonna_analiz
     return;
   }
 
-  int contacolonne_da_leggere = 0;
+  int contacolonne_da_leggere = 0, contatore;
   char str[LINE_MAX_LENGTH], backup_str[LINE_MAX_LENGTH];
   char * pch;
   da_leggere.getline(str, LINE_MAX_LENGTH);
@@ -116,11 +116,21 @@ void seleziona(char* file_da_leggere, char* file_da_scrivere, int colonna_analiz
   //	righe_salvate.reserve(size_vector*multiplo);
 
 
-  while (1)
+  while (!da_leggere.eof())
   {
-    for (std::vector<double>::size_type i = 0; i < in_lettura.size(); i++) da_leggere >> in_lettura[i];
-
+    contatore = 0;
+    da_leggere.getline(str, LINE_MAX_LENGTH);
     if (da_leggere.eof()) break;
+
+    pch = std::strtok(str, " ;\t");
+    if (pch != NULL && contatore < contacolonne_da_leggere) in_lettura[contatore++] = atof(pch);
+    while (pch != NULL)
+    {
+      pch = std::strtok(NULL, " ;\t");
+      if (pch != NULL && contatore < contacolonne_da_leggere) in_lettura[contatore++] = atof(pch);
+    }
+    //for (std::vector<double>::size_type i = 0; i < in_lettura.size(); i++) da_leggere >> in_lettura[i];
+
 
     if (doubleEquality(in_lettura[colonna_analizzata - 1], valore_riferimento)) righe_salvate.push_back(in_lettura);
   }
@@ -146,18 +156,18 @@ void seleziona(char* file_da_leggere, char* file_da_scrivere, int colonna_analiz
 
 int main(int argc, char *argv[])
 {
-  if (argc < 4)
-  {
-    std::cout << "Run as: ./a.out -in input_file -out output_file [-select column_number reference_value] [-average column_number]" << std::endl;
-    return -254;
-  }
-
   int file_da_leggere = -1, file_da_scrivere = -1;
   int colonna_da_selezionare = -1;
   //int colonna_da_mediare = -1;
   double valore_riferimento;
   bool do_select = false;
   //bool do_average = false;
+
+  if (argc < 4)
+  {
+    std::cout << "Run as: ./a.out -in input_file -out output_file [-select column_number reference_value] [-average column_number]" << std::endl;
+    return -254;
+  }
 
   for (int i = 1; i < argc; i++)	// * We will iterate over argv[] to get the parameters stored inside.
   {								// * Note that we're starting on 1 because we don't need to know the path of the program, which is stored in argv[0]
