@@ -76,11 +76,11 @@ void seleziona(char* file_da_leggere, char* file_da_scrivere, int colonna_analiz
   // da_leggere.clear();
   // da_leggere.seekg(0, std::ios::beg);
 
-  pch = std::strtok(str, "\t");
+  pch = std::strtok(str, " ;\t");
   if (pch != NULL) contacolonne_da_leggere++;
   while (pch != NULL)
   {
-    pch = std::strtok(NULL, "\t");
+    pch = std::strtok(NULL, " ;\t");
     if (pch != NULL) contacolonne_da_leggere++;
   }
 
