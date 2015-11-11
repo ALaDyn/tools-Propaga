@@ -15,5 +15,3 @@ The program is distributed under the terms of the GNU General Public License
 
 converter is a tool that I wrote to port data to/from Propaga, ALaDyn, Astra, Fluka, VTK, Path, ...
 Other uses are its ability to analyse phase-space dumps, in order to calculate angles, energies and produce plots
-
-dataproc is a tool that I use to extract useful parameters from the output of our programs, mainly from the MPI version of Propaga

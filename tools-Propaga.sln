@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "converter", "converter\converter.vcxproj", "{65EA2AB1-4BE0-4224-AB5A-38B70DB26915}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dataproc", "dataproc\dataproc.vcxproj", "{2EA7224A-7614-4007-9CD2-E67DBA4B5ED3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "scramble-lines", "scramble-lines\scramble-lines.vcxproj", "{7138614B-6BCB-4F84-98DE-88C408BE9237}"
 EndProject
@@ -27,10 +25,6 @@ Global
 		{65EA2AB1-4BE0-4224-AB5A-38B70DB26915}.Debug|Win32.Build.0 = Debug|Win32
 		{65EA2AB1-4BE0-4224-AB5A-38B70DB26915}.Release|Win32.ActiveCfg = Release|Win32
 		{65EA2AB1-4BE0-4224-AB5A-38B70DB26915}.Release|Win32.Build.0 = Release|Win32
-		{2EA7224A-7614-4007-9CD2-E67DBA4B5ED3}.Debug|Win32.ActiveCfg = Debug|Win32
-		{2EA7224A-7614-4007-9CD2-E67DBA4B5ED3}.Debug|Win32.Build.0 = Debug|Win32
-		{2EA7224A-7614-4007-9CD2-E67DBA4B5ED3}.Release|Win32.ActiveCfg = Release|Win32
-		{2EA7224A-7614-4007-9CD2-E67DBA4B5ED3}.Release|Win32.Build.0 = Release|Win32
 		{7138614B-6BCB-4F84-98DE-88C408BE9237}.Debug|Win32.ActiveCfg = Debug|Win32
 		{7138614B-6BCB-4F84-98DE-88C408BE9237}.Debug|Win32.Build.0 = Debug|Win32
 		{7138614B-6BCB-4F84-98DE-88C408BE9237}.Release|Win32.ActiveCfg = Release|Win32
