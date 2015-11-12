@@ -73,7 +73,7 @@ The program is distributed under the terms of the GNU General Public License
 #define DA_ERG_A_MEV      6.241509744512e+5 // conversione mia come sotto descritta
 #define FROM_VOLT_TO_STATVOLT 3.335640951982e-3 // 1 statvolt = 299.792458 volts.
 #define DIM_MAX_LINEA     1024
-#define EPSILON         1.0e-3
+#define EPSILON         1.0e-6
 
 bool doubleEquality(double, double);
 void estrai_da_sorgente(char *, char *, char *);

@@ -91,12 +91,6 @@ void seleziona(char* file_da_leggere, char* file_da_selezionare, char* file_da_s
   printf("Trovate %d colonne nel file da leggere e %d colonne nel file da selezionare\n", contacolonne_da_leggere, contacolonne_da_selezionare);
   printf("Considero la %d colonna come quella contenente il flag vivo-morto\n", colonna_analizzata + 1);
 
-  if (contacolonne_da_leggere != contacolonne_da_selezionare || contacolonne_da_selezionare <= colonna_analizzata)
-  {
-    printf("Numero insufficiente di colonne\n");
-    return;
-  }
-
   if (contacolonne_da_leggere != 10 || contacolonne_da_selezionare != 10)
   {
     printf("Attenzione, il programma funziona solo con file a 10 colonne\n");
@@ -135,7 +129,7 @@ void seleziona(char* file_da_leggere, char* file_da_selezionare, char* file_da_s
     }
   }
 
-  std::cout << "Trovate " << numero_protoni_salvati << " particelle da selezionare" << std::endl;
+  std::cout << "Trovate " << numero_protoni_salvati << " (" << protoni_da_salvare.size() << ") particelle da selezionare" << std::endl;
 
   protoni_salvati.reserve(numero_protoni_salvati);
 
@@ -172,7 +166,7 @@ void seleziona(char* file_da_leggere, char* file_da_selezionare, char* file_da_s
     da_scrivere << std::setprecision(7) << std::setiosflags(std::ios::scientific)
       << protoni_salvati[i].x << "\t" << protoni_salvati[i].y << "\t" << protoni_salvati[i].z
       << "\t" << protoni_salvati[i].px << "\t" << protoni_salvati[i].py << "\t" << protoni_salvati[i].pz
-      << "\t" << (int)protoni_salvati[i].tipo_particella << "\t" << (int)protoni_salvati[i].weight << "\t"
+      << "\t" << (int)protoni_salvati[i].tipo_particella << "\t" << protoni_salvati[i].weight << "\t"
       << (int)protoni_salvati[i].flag_assorbimento << "\t" << (int)protoni_salvati[i].ordinale << std::endl;
   }
 
