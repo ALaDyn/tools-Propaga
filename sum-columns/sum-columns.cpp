@@ -15,6 +15,8 @@ int main(int narg, char *args[])
   std::string line;
   std::ostringstream nomefile;
   int xmin = 0, xmax = 0, jump = 0, contarighe = 0;
+  int contacolonne = 3;
+  int riga = 0;
   double terza_colonna;
 
   if (narg != 9)
@@ -72,9 +74,13 @@ int main(int narg, char *args[])
   infile.close();
 
   std::cout << "Trovate " << contarighe << " righe non di commenti (#).\nVerrà creato un file che somma la terza colonna di tutti questi files." << std::endl;
-  std::vector <std::vector <double> > dati(contarighe, std::vector<double>(3, 0.0));
 
-  int riga = 0;
+  double ** dati;
+  dati = new double*[contarighe];
+  for (int i = 0; i < contarighe; i++) {
+    dati[i] = new double[contacolonne];
+    for (int j = 0; j < contacolonne; j++) dati[i][j] = 0.0;
+  }
 
   for (int i = xmin; i <= xmax; i += jump)
   {
@@ -106,6 +112,15 @@ int main(int narg, char *args[])
 
         riga++;
       }
+      if (riga > contarighe) {
+        std::cerr << "Warning, too many lines in file " << nomefile.str().c_str() << std::endl;
+        break;
+      }
+    }
+
+    if (riga < contarighe) {
+      std::cerr << "Warning, too few lines in file " << nomefile.str().c_str() << std::endl;
+      break;
     }
 
     infile.close();
