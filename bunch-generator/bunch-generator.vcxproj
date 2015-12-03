@@ -111,9 +111,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BuGe.cpp" />
+    <ClCompile Include="NumberGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BuGe.h" />
+    <ClInclude Include="NumberGenerator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

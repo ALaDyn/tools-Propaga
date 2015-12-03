@@ -22,16 +22,14 @@
 
 
 
-
-#include "BuGe.h" 
-
-//#define USE_STRINGENT_CHECK
-
-
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
-#pragma warning(disable : 869)
-#pragma warning(disable : 981)
-#endif
+#include <cstdlib> 
+#include <cmath> 
+#include <ctime> 
+#include <iostream> 
+#include <iomanip>
+#include <fstream> 
+#include <limits>
+#include "NumberGenerator.h" 
 
 
 
@@ -184,8 +182,8 @@ int main(int argc, char*argv[])
         std::cout << "Non valido!\n: ";
       }
     }
-    mean_p = sqrt(mean_kinetic_energy*mean_kinetic_energy + 2*mean_kinetic_energy*massa);
-    delta_p = sqrt(delta_kinetic_energy*delta_kinetic_energy + 2*delta_kinetic_energy*massa);
+    mean_p = sqrt(mean_kinetic_energy*mean_kinetic_energy + 2 * mean_kinetic_energy*massa);
+    delta_p = sqrt(delta_kinetic_energy*delta_kinetic_energy + 2 * delta_kinetic_energy*massa);
   }
   else if (selection_type == 3)   // leggo il gamma*beta e lo converto in p ± delta_p
   {
@@ -293,13 +291,13 @@ int main(int argc, char*argv[])
         && x*x*packet_radius2 + x_prime*x_prime*packet_openingAngle2 + y*y*packet_radius2 + y_prime*y_prime*packet_openingAngle2 <= 1.0
         && x*x*packet_radius2 + x_prime*x_prime*packet_openingAngle2 + y*y*packet_radius2 + y_prime*y_prime*packet_openingAngle2 >= 0.95
 #ifdef USE_STRINGENT_CHECK
-        && gamma*x*x + 2*alpha*x*x_prime + beta*x_prime*x_prime <= epsilon
-        && gamma*y*y + 2*alpha*y*y_prime + beta*y_prime*y_prime <= epsilon
+        && gamma*x*x + 2 * alpha*x*x_prime + beta*x_prime*x_prime <= epsilon
+        && gamma*y*y + 2 * alpha*y*y_prime + beta*y_prime*y_prime <= epsilon
         && packet_openingAngle*packet_openingAngle*y*y + packet_radius*packet_radius*x_prime*x_prime <= packet_openingAngle*packet_openingAngle*packet_radius*packet_radius
         && packet_openingAngle*packet_openingAngle*x*x + packet_radius*packet_radius*y_prime*y_prime <= packet_openingAngle*packet_openingAngle*packet_radius*packet_radius
-        && gamma*x*x + 2*alpha*x*y_prime + beta*y_prime*y_prime <= epsilon
-        && gamma*y*y + 2*alpha*y*x_prime + beta*x_prime*x_prime <= epsilon
-        && (x_prime/packet_openingAngle)*(x_prime/packet_openingAngle) + (y_prime/packet_openingAngle)*(y_prime/packet_openingAngle) <= 1
+        && gamma*x*x + 2 * alpha*x*y_prime + beta*y_prime*y_prime <= epsilon
+        && gamma*y*y + 2 * alpha*y*x_prime + beta*x_prime*x_prime <= epsilon
+        && (x_prime / packet_openingAngle)*(x_prime / packet_openingAngle) + (y_prime / packet_openingAngle)*(y_prime / packet_openingAngle) <= 1
         && x_prime <= packet_openingAngle && x_prime >= -packet_openingAngle
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
@@ -411,13 +409,13 @@ int main(int argc, char*argv[])
         && x*x*packet_radius2 + x_prime*x_prime*packet_openingAngle2 + y*y*packet_radius2 + y_prime*y_prime*packet_openingAngle2 <= 1.0
         && x*x*packet_radius2 + x_prime*x_prime*packet_openingAngle2 + y*y*packet_radius2 + y_prime*y_prime*packet_openingAngle2 >= 0.95
 #ifdef USE_STRINGENT_CHECK
-        && gamma*x*x + 2*alpha*x*x_prime + beta*x_prime*x_prime <= epsilon
-        && gamma*y*y + 2*alpha*y*y_prime + beta*y_prime*y_prime <= epsilon
+        && gamma*x*x + 2 * alpha*x*x_prime + beta*x_prime*x_prime <= epsilon
+        && gamma*y*y + 2 * alpha*y*y_prime + beta*y_prime*y_prime <= epsilon
         && packet_openingAngle*packet_openingAngle*y*y + packet_radius*packet_radius*x_prime*x_prime <= packet_openingAngle*packet_openingAngle*packet_radius*packet_radius
         && packet_openingAngle*packet_openingAngle*x*x + packet_radius*packet_radius*y_prime*y_prime <= packet_openingAngle*packet_openingAngle*packet_radius*packet_radius
-        && gamma*x*x + 2*alpha*x*y_prime + beta*y_prime*y_prime <= epsilon
-        && gamma*y*y + 2*alpha*y*x_prime + beta*x_prime*x_prime <= epsilon
-        && (x_prime/packet_openingAngle)*(x_prime/packet_openingAngle) + (y_prime/packet_openingAngle)*(y_prime/packet_openingAngle) <= 1
+        && gamma*x*x + 2 * alpha*x*y_prime + beta*y_prime*y_prime <= epsilon
+        && gamma*y*y + 2 * alpha*y*x_prime + beta*x_prime*x_prime <= epsilon
+        && (x_prime / packet_openingAngle)*(x_prime / packet_openingAngle) + (y_prime / packet_openingAngle)*(y_prime / packet_openingAngle) <= 1
         && x_prime <= packet_openingAngle && x_prime >= -packet_openingAngle
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
