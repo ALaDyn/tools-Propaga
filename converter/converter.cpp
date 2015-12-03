@@ -423,7 +423,7 @@ void convert_from_propaga_to_binary_dst(char *fileIN, char *fileOUT, double C, d
   int number_of_particles = particelle_file.size();
   double mc2 = MP_MEV; // *C*C ??
 
-  
+
   //A.dst file use a binary format.It contains information of a beam at a given longitudinal position : number of particles, beam current, repetition frequency and rest mass as well as the 6D particles coordinates.The format is the following :
   //2xCHAR + INT(Np) + DOUBLE(Ib(mA)) + DOUBLE(freq(MHz)) + CHAR +
   //Np×[6×DOUBLE(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV))] +
@@ -517,7 +517,7 @@ void convert_from_binary_plt_to_ascii(char *fileIN, char *fileOUT, double C)
   //2xCHAR+INT(Ne)+INT(Np)+DOUBLE(Ib(A))+DOUBLE(freq(MHz))+DOUBLE(mc2(MeV)) +
   // + Ne×[CHAR + INT(Nelp) + DOUBLE(Zgen) + DOUBLE(phase0(deg)) + DOUBLE(wgen(MeV)) + Np×[7×FLOAT(x(cm), x'(rad),y(cm),y'(rad), phi(rad), Energie(MeV), Loss)]]
 
-  
+
   //Comments:
   //- CHAR is 1 byte long,
   //- INT is 4 bytes long,
@@ -988,7 +988,7 @@ void preproc_remove_negatives(char *fileIN, char *fileOUT, int whichcol)
   std::cout << "\nConservate solo le particelle con coordinata positiva nella " << whichcol << " colonna" << std::endl;
   particelle_file.clear();
 
-    }
+}
 
 
 void preproc_nullify_transverse_momentum(char *fileIN, char *fileOUT)
@@ -1070,7 +1070,7 @@ void preproc_nullify_transverse_momentum(char *fileIN, char *fileOUT)
   std::cout << "\nAzzerati gli impulsi trasversi delle particelle!" << std::endl;
   particelle_file.clear();
 
-    }
+}
 
 
 void convert_from_fluka_to_propaga(char *fileIN, char *fileOUT, double weight)
@@ -1169,7 +1169,7 @@ void convert_from_fluka_to_propaga(char *fileIN, char *fileOUT, double weight)
   out.close();
 
   std::cout << "\nConvertite " << dimensione_file << " particelle da Fluka a Propaga" << std::endl;
-    }
+}
 
 
 void convert_from_propaga_to_path(char *fileIN, char *fileOUT, double C, double pz_ref, int particleId, double conv_factor, double frequency, double ref_phase)
@@ -1398,7 +1398,7 @@ void convert_from_propaga_to_path(char *fileIN, char *fileOUT, double C, double 
   out.close();
 
   std::cout << "\nConvertite " << dimensione_file << " particelle dal formato ppg al txt di Travel" << std::endl;
-    }
+}
 
 
 void convert_from_path_to_propaga(char *fileIN, char *fileOUT)
@@ -1687,6 +1687,13 @@ void postproc_bunchfile_binning_1D(char *fileIN, char *fileOUT, int colbin, int 
   in.clear();
   in.seekg(0, std::ios::beg);
 
+  double dimbin, whichbin;
+  int whichbin_int;
+  double *binfilling = new double[nbins + 3];
+  for (int i = 0; i < nbins + 3; i++) binfilling[i] = 0.0;
+  dimbin = (high - low) / (double)nbins;
+
+
   pch = strtok(str, " \t");
   if (pch != NULL) contacolonne++;
   while (pch != NULL)
@@ -1696,83 +1703,71 @@ void postproc_bunchfile_binning_1D(char *fileIN, char *fileOUT, int colbin, int 
   }
   printf("Found %d columns in your file\n", contacolonne);
 
-  if (contacolonne == 0)
+  if (contacolonne != 0)
   {
-    printf("Unable to proceed!\n");
-    in.close();
-    out.close();
-    return;
-  }
+    colbin--; // cosi' che sia valida per usarla direttamente nell'array
 
-  colbin--; // cosi' che sia valida per usarla direttamente nell'array
+    if (colbin < 0 || colbin >= contacolonne)
+    {
+      std::cout << "Colonna non esistente per il binning" << std::endl;
+      return;
+    }
+    if (low > high)
+    {
+      std::cout << "Estremi di binnaggio invertiti" << std::endl;
+      return;
+    }
 
-  if (colbin < 0 || colbin >= contacolonne)
-  {
-    std::cout << "Colonna non esistente per il binning" << std::endl;
-    return;
-  }
-  if (low > high)
-  {
-    std::cout << "Estremi di binnaggio invertiti" << std::endl;
-    return;
-  }
+    bool usa_colonna_pesi = false;
+    int colonna_peso = 0;
+    if (weight < 0)
+    {
+      usa_colonna_pesi = true;
+      colonna_peso = (int)(-weight);    // il -1 serve per avere gia' una variabile valida per l'array c++
+      std::cout << "Uso la colonna #" << colonna_peso << " per i pesi delle particelle" << std::endl;
+    }
+    colonna_peso--;
+    if (usa_colonna_pesi && (colonna_peso < 0 || colonna_peso >= contacolonne))
+    {
+      std::cout << "Colonna non esistente per il weighting" << std::endl;
+      return;
+    }
 
-  bool usa_colonna_pesi = false;
-  int colonna_peso = 0;
-  if (weight < 0)
-  {
-    usa_colonna_pesi = true;
-    colonna_peso = (int)(-weight);    // il -1 serve per avere gia' una variabile valida per l'array c++
-    std::cout << "Uso la colonna #" << colonna_peso << " per i pesi delle particelle" << std::endl;
-  }
-  colonna_peso--;
-  if (usa_colonna_pesi && (colonna_peso < 0 || colonna_peso >= contacolonne))
-  {
-    std::cout << "Colonna non esistente per il weighting" << std::endl;
-    return;
-  }
-
-  std::vector<double> dati_particella(contacolonne, 0);
+    std::vector<double> dati_particella(contacolonne, 0);
 
 #ifdef USE_RESERVE
-  size_t size_vector = RESERVE_SIZE_VECTOR;
-  int multiplo = 1;
-  particelle_file.reserve(size_vector*multiplo);
+    size_t size_vector = RESERVE_SIZE_VECTOR;
+    int multiplo = 1;
+    particelle_file.reserve(size_vector*multiplo);
 #endif
 
-  double dimbin, whichbin;
-  int whichbin_int;
-  double *binfilling = new double[nbins + 3];
-  for (int i = 0; i < nbins + 3; i++) binfilling[i] = 0.0;
+    std::cout << "Minimo: " << low << "\nMassimo: " << high << "\nNumero bin: " << nbins << "\nDimensione bin: " << dimbin << std::endl;
 
-  dimbin = (high - low) / (double)nbins;
-
-  std::cout << "Minimo: " << low << "\nMassimo: " << high << "\nNumero bin: " << nbins << "\nDimensione bin: " << dimbin << std::endl;
-
-  while (1)
-  {
-    for (int i = 0; i < contacolonne; i++) in >> dati_particella.at(i);
-
-    if (in.eof()) break;
-
-    if (dati_particella.at(colbin) < low)
+    while (1)
     {
-      whichbin = 0.0;
-      whichbin_int = 0;
-    }
-    else if (dati_particella.at(colbin) > high)
-    {
-      whichbin = (double)(nbins + 2);
-      whichbin_int = nbins + 2;
-    }
-    else
-    {
-      whichbin = (dati_particella.at(colbin) - low) / dimbin;
-      whichbin_int = (int)(whichbin + 1.0);
-    }
+      for (int i = 0; i < contacolonne; i++) in >> dati_particella.at(i);
 
-    if (usa_colonna_pesi) binfilling[whichbin_int] += dati_particella.at(colonna_peso);
-    else binfilling[whichbin_int] += weight;
+      if (in.eof()) break;
+
+      if (dati_particella.at(colbin) < low)
+      {
+        whichbin = 0.0;
+        whichbin_int = 0;
+      }
+      else if (dati_particella.at(colbin) > high)
+      {
+        whichbin = (double)(nbins + 2);
+        whichbin_int = nbins + 2;
+      }
+      else
+      {
+        whichbin = (dati_particella.at(colbin) - low) / dimbin;
+        whichbin_int = (int)(whichbin + 1.0);
+      }
+
+      if (usa_colonna_pesi) binfilling[whichbin_int] += dati_particella.at(colonna_peso);
+      else binfilling[whichbin_int] += weight;
+    }
   }
 
   high = low;
@@ -1805,60 +1800,6 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
   in.clear();
   in.seekg(0, std::ios::beg);
 
-  pch = strtok(str, " \t");
-  if (pch != NULL) contacolonne++;
-  while (pch != NULL)
-  {
-    pch = strtok(NULL, " \t");
-    if (pch != NULL) contacolonne++;
-  }
-  printf("Found %d columns in your file\n", contacolonne);
-
-  if (contacolonne == 0)
-  {
-    printf("Unable to proceed!\n");
-    in.close();
-    out.close();
-    return;
-  }
-
-  colbin1--;  //per indirizzo array
-  colbin2--;  //per indirizzo array
-
-  if (colbin1 < 0 || colbin2 < 0 || colbin1 >= contacolonne || colbin2 >= contacolonne)
-  {
-    std::cout << "Colonna non esistente per il binning" << std::endl;
-    return;
-  }
-
-  if (lowbin1 > highbin1 || lowbin2 > highbin2)
-  {
-    std::cout << "Estremi di binnaggio invertiti" << std::endl;
-    return;
-  }
-
-  bool usa_colonna_pesi = false;
-  int colonna_peso = 0;
-  if (weight < 0)
-  {
-    usa_colonna_pesi = true;
-    colonna_peso = (int)((-weight) - 1);  //-1 per indirizzo array
-  }
-  if (usa_colonna_pesi && (colonna_peso < 0 || colonna_peso >= contacolonne))
-  {
-    std::cout << "Colonna non esistente per il weighting" << std::endl;
-    return;
-  }
-
-
-  std::vector<double> dati_particella(contacolonne, 0);
-
-#ifdef USE_RESERVE
-  size_t size_vector = RESERVE_SIZE_VECTOR;
-  int multiplo = 1;
-  particelle_file.reserve(size_vector*multiplo);
-#endif
-
   double minimum1, maximum1, minimum2, maximum2;
   double dimbin1, dimbin2, whichbin1, whichbin2;
   int whichbin1_int, whichbin2_int;
@@ -1874,50 +1815,99 @@ void postproc_bunchfile_binning_2D(char *fileIN, char *fileOUT, int colbin1, int
   dimbin2 = (highbin2 - lowbin2) / (double)nbins2;
   std::cout << "----------\nSecondo binning\nMinimo: " << lowbin2 << "\nMassimo: " << highbin2 << "\nNumero bin: " << nbins2 << "\nDimensione bin: " << dimbin2 << std::endl;
 
-  in.clear();
-  in.seekg(0, std::ios::beg);
-
-  while (1)
+  pch = strtok(str, " \t");
+  if (pch != NULL) contacolonne++;
+  while (pch != NULL)
   {
-    for (int i = 0; i < contacolonne; i++) in >> dati_particella.at(i);
-    if (in.eof()) break;
+    pch = strtok(NULL, " \t");
+    if (pch != NULL) contacolonne++;
+  }
+  printf("Found %d columns in your file\n", contacolonne);
 
-    if (dati_particella.at(colbin1) < lowbin1)
+  if (contacolonne != 0)
+  {
+    colbin1--;  //per indirizzo array
+    colbin2--;  //per indirizzo array
+
+    if (colbin1 < 0 || colbin2 < 0 || colbin1 >= contacolonne || colbin2 >= contacolonne)
     {
-      whichbin1 = 0.0;
-      whichbin1_int = 0;
-    }
-    else if (dati_particella.at(colbin1) > highbin1)
-    {
-      whichbin1 = (double)(nbins1 + 2);
-      whichbin1_int = nbins1 + 2;
-    }
-    else
-    {
-      whichbin1 = (dati_particella.at(colbin1) - lowbin1) / dimbin1;
-      whichbin1_int = (int)(whichbin1 + 1.0);
+      std::cout << "Colonna non esistente per il binning" << std::endl;
+      return;
     }
 
-    if (dati_particella.at(colbin2) < lowbin2)
+    if (lowbin1 > highbin1 || lowbin2 > highbin2)
     {
-      whichbin2 = 0.0;
-      whichbin2_int = 0;
-    }
-    else if (dati_particella.at(colbin2) > highbin2)
-    {
-      whichbin2 = (double)(nbins2 + 2);
-      whichbin2_int = nbins2 + 2;
-    }
-    else
-    {
-      whichbin2 = (dati_particella.at(colbin2) - lowbin2) / dimbin2;
-      whichbin2_int = (int)(whichbin2 + 1.0);
+      std::cout << "Estremi di binnaggio invertiti" << std::endl;
+      return;
     }
 
-    //    std::cout << "whichbin1: " << whichbin1_int << ", whichbin2: " << whichbin2_int << std::endl;
-    if (usa_colonna_pesi) binfilling[whichbin1_int][whichbin2_int] += dati_particella.at(colonna_peso);
-    else binfilling[whichbin1_int][whichbin2_int] += weight;
+    bool usa_colonna_pesi = false;
+    int colonna_peso = 0;
+    if (weight < 0)
+    {
+      usa_colonna_pesi = true;
+      colonna_peso = (int)((-weight) - 1);  //-1 per indirizzo array
+    }
+    if (usa_colonna_pesi && (colonna_peso < 0 || colonna_peso >= contacolonne))
+    {
+      std::cout << "Colonna non esistente per il weighting" << std::endl;
+      return;
+    }
 
+
+    std::vector<double> dati_particella(contacolonne, 0);
+
+#ifdef USE_RESERVE
+    size_t size_vector = RESERVE_SIZE_VECTOR;
+    int multiplo = 1;
+    particelle_file.reserve(size_vector*multiplo);
+#endif
+
+    in.clear();
+    in.seekg(0, std::ios::beg);
+
+    while (1)
+    {
+      for (int i = 0; i < contacolonne; i++) in >> dati_particella.at(i);
+      if (in.eof()) break;
+
+      if (dati_particella.at(colbin1) < lowbin1)
+      {
+        whichbin1 = 0.0;
+        whichbin1_int = 0;
+      }
+      else if (dati_particella.at(colbin1) > highbin1)
+      {
+        whichbin1 = (double)(nbins1 + 2);
+        whichbin1_int = nbins1 + 2;
+      }
+      else
+      {
+        whichbin1 = (dati_particella.at(colbin1) - lowbin1) / dimbin1;
+        whichbin1_int = (int)(whichbin1 + 1.0);
+      }
+
+      if (dati_particella.at(colbin2) < lowbin2)
+      {
+        whichbin2 = 0.0;
+        whichbin2_int = 0;
+      }
+      else if (dati_particella.at(colbin2) > highbin2)
+      {
+        whichbin2 = (double)(nbins2 + 2);
+        whichbin2_int = nbins2 + 2;
+      }
+      else
+      {
+        whichbin2 = (dati_particella.at(colbin2) - lowbin2) / dimbin2;
+        whichbin2_int = (int)(whichbin2 + 1.0);
+      }
+
+      //    std::cout << "whichbin1: " << whichbin1_int << ", whichbin2: " << whichbin2_int << std::endl;
+      if (usa_colonna_pesi) binfilling[whichbin1_int][whichbin2_int] += dati_particella.at(colonna_peso);
+      else binfilling[whichbin1_int][whichbin2_int] += weight;
+
+    }
   }
 
   minimum1 = lowbin1 - dimbin1;
@@ -2067,7 +2057,7 @@ void preproc_energyCut(char* fileIN, char* fileOUT, double C, double meanE, doub
 
   std::cout << "\nPreprocessato il file e rimosse le particelle con energia diversa da " << meanE << "MeV ± " << deltaE << "MeV" << std::endl;
 
-    }
+}
 
 
 void preproc_energyCutAbove(char* fileIN, char* fileOUT, double C, double minE, int descrittore)
@@ -2206,7 +2196,7 @@ void preproc_energyCutAbove(char* fileIN, char* fileOUT, double C, double minE, 
   if (below) std::cout << "\nPreprocessato il file e selezionate le particelle con energia inferiore a  " << minE << "MeV" << std::endl;
   else std::cout << "\nPreprocessato il file e selezionate le particelle con energia superiore a  " << minE << "MeV" << std::endl;
 
-    }
+}
 
 
 void postproc_split_by_weight(char* fileIN, int colweight)
@@ -2441,7 +2431,7 @@ void postproc_split_p_and_e(char* fileIN, char* fileOUT1, char* fileOUT2)
   out_e.close();
 
   std::cout << "\nSeparati i " << numero_protoni << " protoni dai " << numero_elettroni << " elettroni nei due files prodotti" << std::endl;
-    }
+}
 
 
 void preproc_angularCut(char* fileIN, char* fileOUT, double angleMin, double angleMax)
@@ -3572,7 +3562,7 @@ int main(int argc, char *argv[])
         nbins2 = atoi(argv[8]);   // colonna tipo particelle (negativo lo imposta manualmente a tutte)
         postproc_xyzE(argv[4], output_file, C, colbin, nbins, colbin2, nbins2);
         break;
-        case 46:
+      case 46:
         C = 29979245800.0;
         frequency = atof(argv[5]);
         ref_phase = atof(argv[6]);  // riciclo variabile
