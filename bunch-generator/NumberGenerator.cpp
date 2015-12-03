@@ -22,6 +22,15 @@
 
 
 
+#include <cstdlib> 
+#include <cmath> 
+#include <ctime> 
+#include <iostream> 
+#include <iomanip>
+#include <fstream> 
+#include <limits>
+
+
 #include "NumberGenerator.h"
 
 

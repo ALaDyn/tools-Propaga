@@ -31,7 +31,7 @@
 #include <limits>
 #include "NumberGenerator.h" 
 
-
+#define ALIVE_ID_FLAG 0
 
 int main(int argc, char*argv[])
 {
@@ -42,7 +42,7 @@ int main(int argc, char*argv[])
   int packet_numberOfParticles = -1;
   if (argc < 2)
   {
-    std::cout << "Si usa: " << argv[0] << " nome_file_output" << std::endl;
+    std::cout << "Usage: " << argv[0] << " output_file" << std::endl;
     return 255;
   }
   std::ofstream packet(argv[1], std::ios::app);
@@ -55,9 +55,10 @@ int main(int argc, char*argv[])
   double mean_p = -1.0, delta_p = -1.0;
 
   double massa = -1.0;
-  double tipo_particella = -1;
+  int tipo_particella = 0;
+  double particle_weight = 1.0;
 
-  std::cout << "Elettroni (1), protoni (2) o particelle di massa definita dall'utente (3) ?\n: ";
+  std::cout << "Protons (1), user-defined (2) or electrons (3) ?\n: ";  // this numbering scheme is chosen just to comply with Fluka/Propaga, where 1=protons, 3=electrons
   while (tipo_particella != 1 && tipo_particella != 2 && tipo_particella != 3)
   {
     std::cin >> tipo_particella;
@@ -65,15 +66,14 @@ int main(int argc, char*argv[])
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Non valido!\n: ";
+      std::cout << "Invalid!\n: ";
     }
   }
 
-  if (tipo_particella == 1)       massa = ME_MEV;
-  else if (tipo_particella == 2)  massa = MP_MEV;
-  else
+  if (tipo_particella == 1)       massa = MP_MEV;
+  else if (tipo_particella == 2)
   {
-    std::cout << "Dimmi la massa in MeV/c^2 della particella: ";
+    std::cout << "Give me the particle mass [MeV/c^2]: ";
     while (massa < ONE_eV_IN_MeV)
     {
       std::cin >> massa;
@@ -81,10 +81,11 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
     }
   }
+  else if (tipo_particella == 3)  massa = ME_MEV;
 
   double massa_inversa = 1. / massa;
 
@@ -302,8 +303,8 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << (int)x << "\t" << (int)y << "\t" << (int)z << "\t" << (int)px*massa_inversa << "\t" << (int)py*massa_inversa << "\t" << (int)pz*massa_inversa << std::endl;
-        i++;
+        packet << (int)x << "\t" << (int)y << "\t" << (int)z << "\t" << (int)px*massa_inversa << "\t" << (int)py*massa_inversa << "\t" << (int)pz*massa_inversa 
+          << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
 
@@ -365,8 +366,8 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa << std::endl;
-        i++;
+        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa
+          << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
 
@@ -420,8 +421,8 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa << std::endl;
-        i++;
+        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa 
+          << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
 
@@ -476,8 +477,8 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa << std::endl;
-        i++;
+        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa 
+          << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
 
@@ -569,8 +570,8 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa << std::endl;
-        i++;
+        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa 
+          << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
 

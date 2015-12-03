@@ -23,18 +23,6 @@
 #pragma once 
 
 #define _USE_MATH_DEFINES
-
-
-#include <cstdlib> 
-#include <cmath> 
-#include <ctime> 
-#include <iostream> 
-#include <iomanip>
-#include <fstream> 
-#include <limits>
-
-
-
 //#define USE_STRINGENT_CHECK
 
 
