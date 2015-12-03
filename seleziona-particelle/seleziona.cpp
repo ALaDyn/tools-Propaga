@@ -1,25 +1,24 @@
-/******************************************************************************
-Copyright 2010, 2011, 2012 Stefano Sinigardi
-The program is distributed under the terms of the GNU General Public License
-******************************************************************************/
+/*******************************************************************************
+*                    Copyright 2010-2015 Stefano Sinigardi                     *
+* The program is distributed under the terms of the GNU General Public License *
+*******************************************************************************/
 
-/**************************************************************************
-  This file is part of tools-Propaga.
-
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  **************************************************************************/
-
+/*******************************************************************************
+* This file is part of tools-Propaga.                                          *
+*                                                                              *
+* tools-Propaga are free software: you can redistribute them and/or modify     *
+* them under the terms of the GNU General Public License as published by       *
+* the Free Software Foundation, either version 3 of the License, or            *
+* (at your option) any later version.                                          *
+*                                                                              *
+* tools-Propaga are distributed in the hope that they will be useful,          *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                *
+* GNU General Public License for more details.                                 *
+*                                                                              *
+* You should have received a copy of the GNU General Public License            *
+* along with tools-Propaga. If not, see <http://www.gnu.org/licenses/>.        *
+*******************************************************************************/
 
 
 #include "seleziona.h"
@@ -108,7 +107,6 @@ void seleziona(char* file_da_leggere, char* file_da_selezionare, char* file_da_s
   }
 
 
-  int numero_protoni_salvati = 0;
 
   particella in_lettura;
   std::vector< particella > protoni_salvati;
@@ -116,29 +114,22 @@ void seleziona(char* file_da_leggere, char* file_da_selezionare, char* file_da_s
 
 
 
-  while (1)
-  {
+  while (1) {
     da_leggere >> in_lettura.x >> in_lettura.y >> in_lettura.z >> in_lettura.px >> in_lettura.py >> in_lettura.pz;
     da_leggere >> in_lettura.tipo_particella >> in_lettura.weight >> in_lettura.flag_assorbimento >> in_lettura.ordinale;
 
     if (da_leggere.eof()) break;
-    if (doubleEquality(in_lettura.flag_assorbimento, ZERODOUBLE))
-    {
+    if (doubleEquality(in_lettura.flag_assorbimento, ZERODOUBLE)) {
       protoni_da_salvare.push_back(in_lettura.ordinale);
-      numero_protoni_salvati++; //utile per dei check se sta crescendo troppo
     }
   }
 
-  std::cout << "Trovate " << numero_protoni_salvati << " (" << protoni_da_salvare.size() << ") particelle da selezionare" << std::endl;
-
-  protoni_salvati.reserve(numero_protoni_salvati);
-
-
+  std::cout << "Trovate " << protoni_da_salvare.size() << " particelle da selezionare" << std::endl;
+  
   // assumo che i protoni siano in ordine di numero ordinale, per risparmiare il ciclo for sulla ricerca disordinata
   int contatore_protoni_salvati = 0;
 
-  while (1)
-  {
+  while (1) {
     da_selezionare >> in_lettura.x >> in_lettura.y >> in_lettura.z >> in_lettura.px >> in_lettura.py >> in_lettura.pz;
     da_selezionare >> in_lettura.tipo_particella >> in_lettura.weight >> in_lettura.flag_assorbimento >> in_lettura.ordinale;
 
@@ -147,7 +138,10 @@ void seleziona(char* file_da_leggere, char* file_da_selezionare, char* file_da_s
     // metodo valido per file scritti con numeri ordinali non crescenti   
     for (std::vector<double>::size_type kk = 0; kk < protoni_da_salvare.size(); kk++)
     {
-      if (doubleEquality(in_lettura.ordinale, protoni_da_salvare.at(kk))) protoni_salvati.push_back(in_lettura);
+      if (doubleEquality(in_lettura.ordinale, protoni_da_salvare.at(kk))) {
+        protoni_salvati.push_back(in_lettura);
+        break;
+      }
     }
 
     /*    // metodo valido solo per file scritti con numeri ordinali crescenti

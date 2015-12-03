@@ -224,3 +224,4 @@ local.properties
 *.hex
 
 /Default
+*.opendb
