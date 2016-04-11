@@ -1,0 +1,16 @@
+sudo: false
+language: c++
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-5
+    - g++-5
+    - libboost-all-dev
+install:
+    - if [ "$CXX" = "g++" ]; then export CXX="g++-5" CC="gcc-5"; fi
+compiler:
+  - gcc
+script:
+  - make
