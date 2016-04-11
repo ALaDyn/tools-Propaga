@@ -1,7 +1,9 @@
-## tools for Propaga ##
+#tools for Propaga
 
-Copyright 2010-2014 Stefano Sinigardi
-The program is distributed under the terms of the GNU General Public License 
+[![Build Status Master](https://travis-ci.org/ALaDyn/tools-Propaga.svg?branch=master)](https://travis-ci.org/ALaDyn/tools-Propaga "master")
+
+Copyright 2010-2016 Stefano Sinigardi
+The program is distributed under the terms of the GNU General Public License
 
     These tools are free software: you can redistribute them and/or modify
     them under the terms of the GNU General Public License as published by
@@ -13,5 +15,12 @@ The program is distributed under the terms of the GNU General Public License
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-converter is a tool that I wrote to port data to/from Propaga, ALaDyn, Astra, Fluka, VTK, Path, ...
+The main tool available in this suite is `converter`, which can read/write files in these formats:
+- Propaga
+- ALaDyn
+- Astra
+- Fluka
+- VTK
+- Path
+
 Other uses are its ability to analyse phase-space dumps, in order to calculate angles, energies and produce plots
