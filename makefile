@@ -1,23 +1,22 @@
-COMPILER = g++
-OPT = -O3 -std=c++11
 
-dataproc_exe = dataproc/dataproc
-converter_exe = converter/converter
+TOOLS := bunch-generator \
+converter \
+revert-lines \
+scan-columns \
+scramble-lines \
+seleziona-particelle \
+sum-columns
 
-SRC1 = dataproc/dataproc.cpp
-SRC2 = converter/converter.cpp
 
+all:
+	@for i in $(TOOLS) ; do \
+	$(MAKE) -C $$i ;\
+	done
 
-debug : OPT = -O0 -g -std=c++11 
-debug : all
+clean:
+	@for i in $(TOOLS) ; do \
+	$(MAKE) -C $$i clean ;\
+	done
 
-all : dataproc converter
-
-dataproc : $(SRC1)
-	$(COMPILER) $(OPT) $(SRC1) -o $(dataproc_exe)
-
-converter : $(SRC2)
-	$(COMPILER) $(OPT) $(SRC2) -o $(converter_exe)
-
-clean :
-	rm -f $(dataproc_exe) $(converter_exe) 
+cleanall: clean
+	
