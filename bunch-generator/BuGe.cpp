@@ -90,13 +90,12 @@ int main(int argc, char*argv[])
   double massa_inversa = 1. / massa;
 
 
-  std::cout << "Generazione pacchetti\n"
-    << "Che tipo di pacchetto vuoi generare?\n"
-    << "1 - x: uniforme  - px: uniforme  (numeri interi!) \n"
-    << "2 - x: uniforme  - px: uniforme                   \n"
-    << "3 - x: uniforme  - px: gaussiano                  \n"
-    << "4 - x: gaussiano - px: gaussiano                  \n"
-    << "5 - x/x', y/y' uniforme, bucato in x/x'           \n"
+  std::cout << "Bunch distribution?\n"
+    << "1 - x: uniform  - px: uniform  (integers!)               \n"
+    << "2 - x: uniform  - px: uniform                            \n"
+    << "3 - x: uniform  - px: gaussian                           \n"
+    << "4 - x: gaussian - px: gaussian                           \n"
+    << "5 - x/x', y/y' uniform, with a hole in the x/x' distrib  \n"
     << ": ";
 
   while (packet_type != 1 && packet_type != 2 && packet_type != 3 && packet_type != 4 && packet_type != 5)
@@ -106,7 +105,7 @@ int main(int argc, char*argv[])
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Non valido!\n: ";
+      std::cout << "Invalid!\n: ";
     }
   }
 
@@ -118,7 +117,7 @@ int main(int argc, char*argv[])
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Non valido!\n: ";
+      std::cout << "Invalid!\n: ";
     }
   }
 
@@ -130,7 +129,7 @@ int main(int argc, char*argv[])
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Non valido!\n: ";
+      std::cout << "Invalid!\n: ";
     }
   }
 
@@ -142,7 +141,7 @@ int main(int argc, char*argv[])
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Non valido!\n: ";
+      std::cout << "Invalid!\n: ";
     }
   }
 
@@ -154,7 +153,7 @@ int main(int argc, char*argv[])
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Non valido!\n: ";
+      std::cout << "Invalid!\n: ";
     }
   }
 
@@ -168,7 +167,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
     }
 
@@ -180,7 +179,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
     }
     mean_p = sqrt(mean_kinetic_energy*mean_kinetic_energy + 2 * mean_kinetic_energy*massa);
@@ -196,7 +195,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!!\n: ";
+        std::cout << "Invalid!!\n: ";
       }
     }
 
@@ -208,7 +207,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
       mean_p = mean_gammabeta * massa;
       delta_p = delta_gammabeta * massa;
@@ -224,7 +223,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
     }
 
@@ -236,7 +235,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
     }
   }
@@ -250,7 +249,7 @@ int main(int argc, char*argv[])
     {
       std::cin.clear();
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      std::cout << "Non valido!\n: ";
+      std::cout << "Invalid!\n: ";
     }
   }
 
@@ -303,7 +302,7 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << (int)x << "\t" << (int)y << "\t" << (int)z << "\t" << (int)px*massa_inversa << "\t" << (int)py*massa_inversa << "\t" << (int)pz*massa_inversa 
+        packet << (int)x << "\t" << (int)y << "\t" << (int)z << "\t" << (int)px*massa_inversa << "\t" << (int)py*massa_inversa << "\t" << (int)pz*massa_inversa
           << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
@@ -366,7 +365,7 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa
+        packet << std::setprecision(8) << x*1E-4 << "\t" << y*1E-4 << "\t" << z*1E-4 << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa
           << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
@@ -421,7 +420,7 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa 
+        packet << std::setprecision(8) << x*1E-4 << "\t" << y*1E-4 << "\t" << z*1E-4 << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa
           << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
@@ -477,7 +476,7 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa 
+        packet << std::setprecision(8) << x*1E-4 << "\t" << y*1E-4 << "\t" << z*1E-4 << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa
           << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;
@@ -498,7 +497,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
     } while (packet_openingAngle < hole_x);
     do
@@ -509,7 +508,7 @@ int main(int argc, char*argv[])
       {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "Non valido!\n: ";
+        std::cout << "Invalid!\n: ";
       }
     } while (packet_radius < hole_px);
 
@@ -570,7 +569,7 @@ int main(int argc, char*argv[])
         && y_prime <= packet_openingAngle && y_prime >= -packet_openingAngle
 #endif
         && sqrt(x_prime*x_prime + y_prime*y_prime) <= packet_openingAngle) {
-        packet << std::setprecision(8) << x << "\t" << y << "\t" << z << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa 
+        packet << std::setprecision(8) << x*1E-4 << "\t" << y*1E-4 << "\t" << z*1E-4 << "\t" << px*massa_inversa << "\t" << py*massa_inversa << "\t" << pz*massa_inversa
           << "\t" << tipo_particella << "\t" << particle_weight << "\t" << ALIVE_ID_FLAG << "\t" << i++ << std::endl;
       }
       else discarded++;

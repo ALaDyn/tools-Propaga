@@ -23,7 +23,7 @@ dataproc/dataproc
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
-
+*.VC.db
 *_i.c
 *_p.c
 *.ilk
@@ -225,3 +225,5 @@ local.properties
 
 /Default
 *.opendb
+bunch-generator/rand1.seed
+
