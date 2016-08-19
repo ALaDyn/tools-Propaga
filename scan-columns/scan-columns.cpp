@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (file_da_leggere < 1 || file_da_scrivere < 1 || colonna_da_selezionare)
+  if (file_da_leggere < 1 || file_da_scrivere < 1 || colonna_da_selezionare < 1)
   {
     printf("Something went wrong in the command line\n");
     return 200;
