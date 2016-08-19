@@ -1,5 +1,5 @@
 /*******************************************************************************
-*                    Copyright 2010-2015 Stefano Sinigardi                     *
+*                    Copyright 2010-2016 Stefano Sinigardi                     *
 * The program is distributed under the terms of the GNU General Public License *
 *******************************************************************************/
 
@@ -23,11 +23,8 @@
 
 
 
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 #define _CRT_SECURE_NO_WARNINGS
-#pragma warning(disable : 869)
-#pragma warning(disable : 981)
-#endif
+#define _SCL_SECURE_NO_WARNINGS
 
 #include <iostream>
 #include <vector>
@@ -39,64 +36,92 @@
 #include <cstring>
 #include <iomanip>
 #include <string>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
-#define RESERVE_SIZE_VECTOR 10000	
-#define LINE_MAX_LENGTH     1024
-#define EPSILON             1.0e-3
+#define SEPARATORS       "; \t"
+#define COMMENTS         "#"
+
+bool Belongs_to(char, std::string);
+std::vector<std::vector<double>> Convert_to_double_vector(std::vector<std::vector<std::string>>, std::string = "");
+std::vector<std::vector<std::string>> Parse_file(std::string, std::string, std::string = "");
+bool checkEqual(double, double);
+void seleziona(char*, char*, size_t, double);
 
 
 
 
-bool doubleEquality(double a, double b)
+int main(int argc, char *argv[])
 {
-  return fabs(a - b) < EPSILON;
+  int file_da_leggere = -1, file_da_scrivere = -1;
+  size_t colonna_da_selezionare = -1;
+  double valore_riferimento;
+
+  if (argc < 8)
+  {
+    std::cout << "Run as: " << argv[0] << " -in input_file -out output_file -select column_number reference_value" << std::endl;
+    return -254;
+  }
+
+  for (int i = 1; i < argc; i++)  // * We will iterate over argv[] to get the parameters stored inside.
+  {                               // * Note that we're starting on 1 because we don't need to know the path of the program, which is stored in argv[0]
+    if (std::string(argv[i]) == "-in")
+    {
+      file_da_leggere = (i + 1);
+      i++;                        // so that we skip in the for cycle the parsing of the <da_leggere> file.
+    }
+    else if (std::string(argv[i]) == "-out")
+    {
+      file_da_scrivere = i + 1;
+      i++;                        // so that we skip in the for cycle the parsing of the <da_scrivere> file.
+    }
+    else if (std::string(argv[i]) == "-select")
+    {
+      colonna_da_selezionare = (size_t) atoi(argv[i + 1]);
+      valore_riferimento = atof(argv[i + 2]);
+      i = i + 2;                  // so that we skip in the for cycle the parsing of the selection properties.
+    }
+    else
+    {
+      std::cout << "Invalid argument: " << argv[i] << std::endl;
+      return -243;
+    }
+  }
+
+  if (file_da_leggere < 1 || file_da_scrivere < 1 || colonna_da_selezionare)
+  {
+    printf("Something went wrong in the command line\n");
+    return 200;
+  }
+
+  seleziona(argv[file_da_leggere], argv[file_da_scrivere], colonna_da_selezionare, valore_riferimento);
+
+  std::cout << "Done!" << std::endl;
+
+  return 0;
 }
 
 
-void seleziona(char* file_da_leggere, char* file_da_scrivere, int colonna_analizzata, double valore_riferimento)
+void seleziona(char* file_da_leggere, char* file_da_scrivere, size_t colonna_analizzata, double valore_riferimento)
 {
-  std::ifstream da_leggere, da_selezionare;
-  std::ofstream da_scrivere;
-  bool fallita_lettura_da_leggere = true, fallita_apertura_da_scrivere = true;
+  bool fallita_apertura_da_scrivere = true;
 
-  da_leggere.open(file_da_leggere);
-  fallita_lettura_da_leggere = da_leggere.fail();
-  std::cout << "File in: " << std::string(file_da_leggere) << std::endl;
-
-  if ((fallita_lettura_da_leggere))
-  {
-    std::cout << "Unable to open input file" << std::endl;
-    return;
-  }
-
-  int contacolonne_da_leggere = 0, contatore;
-  char str[LINE_MAX_LENGTH], backup_str[LINE_MAX_LENGTH];
-  char * pch;
-  da_leggere.getline(str, LINE_MAX_LENGTH);
-  strcpy(backup_str, str);
-  // non serve riportare lo stream all'inizio, anzi cosi' non dobbiamo piu' scartare la prima riga di commento!
-  // da_leggere.clear();
-  // da_leggere.seekg(0, std::ios::beg);
-
-  pch = std::strtok(str, " ;\t");
-  if (pch != NULL) contacolonne_da_leggere++;
-  while (pch != NULL)
-  {
-    pch = std::strtok(NULL, " ;\t");
-    if (pch != NULL) contacolonne_da_leggere++;
-  }
-
-  printf("%d columns were found in the input file\n", contacolonne_da_leggere);
+  std::vector< std::vector<std::string> > parsed_file = Parse_file(file_da_leggere, SEPARATORS);
+  std::vector< std::vector<double> > doubled_file = Convert_to_double_vector(parsed_file, COMMENTS);
 
   printf("Considering %d-th column as the one used to select data\n", colonna_analizzata);
 
-  if (contacolonne_da_leggere <= colonna_analizzata)
+  if (doubled_file.front().size() <= colonna_analizzata)
   {
     printf("Not enough columns in the input file\n");
     return;
   }
 
+  std::vector< std::vector< double > > righe_salvate;
+  for (auto i : doubled_file) if (checkEqual(i[colonna_analizzata - 1], valore_riferimento)) righe_salvate.push_back(i);
+  std::cout << righe_salvate.size() << " useful lines found" << std::endl;
 
+  std::ofstream da_scrivere;
   da_scrivere.open(file_da_scrivere);
   fallita_apertura_da_scrivere = da_scrivere.fail();
   std::cout << "File out: " << std::string(file_da_scrivere) << std::endl;
@@ -107,114 +132,70 @@ void seleziona(char* file_da_leggere, char* file_da_scrivere, int colonna_analiz
     return;
   }
 
-
-  //	size_t size_vector = RESERVE_SIZE_VECTOR;
-  //	int multiplo = 1;
-
-  std::vector<double> in_lettura;
-  in_lettura.resize(contacolonne_da_leggere);
-  std::vector< std::vector< double > > righe_salvate;
-
-  //	righe_salvate.reserve(size_vector*multiplo);
-
-
-  while (!da_leggere.eof())
+  for (auto i : righe_salvate)
   {
-    contatore = 0;
-    da_leggere.getline(str, LINE_MAX_LENGTH);
-    if (da_leggere.eof()) break;
-
-    pch = std::strtok(str, " ;\t");
-    if (pch != NULL && contatore < contacolonne_da_leggere) in_lettura[contatore++] = atof(pch);
-    while (pch != NULL)
-    {
-      pch = std::strtok(NULL, " ;\t");
-      if (pch != NULL && contatore < contacolonne_da_leggere) in_lettura[contatore++] = atof(pch);
-    }
-    //for (std::vector<double>::size_type i = 0; i < in_lettura.size(); i++) da_leggere >> in_lettura[i];
-
-
-    if (doubleEquality(in_lettura[colonna_analizzata - 1], valore_riferimento)) righe_salvate.push_back(in_lettura);
-  }
-
-  std::cout << righe_salvate.size() << " useful lines found" << std::endl;
-
-  da_scrivere << backup_str << std::endl;
-
-  for (std::vector<double>::size_type i = 0; i < righe_salvate.size(); i++)
-  {
-    for (std::vector<double>::size_type j = 0; j < in_lettura.size(); j++) da_scrivere << righe_salvate.at(i).at(j) << "\t";
+    for (auto j : i) da_scrivere << j << "\t";
     da_scrivere << std::endl;
   }
 
 
-  da_leggere.close();
   da_scrivere.close();
-
 }
 
 
-
-
-int main(int argc, char *argv[])
-{
-  int file_da_leggere = -1, file_da_scrivere = -1;
-  int colonna_da_selezionare = -1;
-  //int colonna_da_mediare = -1;
-  double valore_riferimento;
-  bool do_select = false;
-  //bool do_average = false;
-
-  if (argc < 4)
-  {
-    std::cout << "Run as: ./a.out -in input_file -out output_file [-select column_number reference_value] [-average column_number]" << std::endl;
-    return -254;
-  }
-
-  for (int i = 1; i < argc; i++)	// * We will iterate over argv[] to get the parameters stored inside.
-  {								// * Note that we're starting on 1 because we don't need to know the path of the program, which is stored in argv[0]
-    if (std::string(argv[i]) == "-in")
-    {
-      file_da_leggere = (i + 1);
-      i++;		    			// so that we skip in the for cycle the parsing of the <da_leggere> file.
-    }
-    else if (std::string(argv[i]) == "-out")
-    {
-      file_da_scrivere = i + 1;
-      i++;							// so that we skip in the for cycle the parsing of the <da_scrivere> file.
-    }
-    else if (std::string(argv[i]) == "-select")
-    {
-      do_select = true;
-      colonna_da_selezionare = atoi(argv[i + 1]);
-      valore_riferimento = atof(argv[i + 2]);
-      i = i + 2;							// so that we skip in the for cycle the parsing of the selection properties.
-    }
-    //else if (std::string(argv[i]) == "-average")
-    //{
-    //  do_average = true;
-    //  colonna_da_mediare = atoi(argv[i + 1]);
-    //  i++;							// so that we skip in the for cycle the parsing of the average properties.
-    //}
-    else
-    {
-      std::cout << "Invalid argument: " << argv[i] << std::endl;
-      return -243;
-    }
-  }
-
-  //if (file_da_leggere < 1 || file_da_scrivere < 1 || (colonna_da_selezionare < 1 && do_select) || (colonna_da_mediare < 1 && do_average))
-  if (file_da_leggere < 1 || file_da_scrivere < 1 || (colonna_da_selezionare < 1 && do_select))
-  {
-    printf("Something went wrong in the command line\n");
-    return 200;
-  }
-
-  if (do_select) seleziona(argv[file_da_leggere], argv[file_da_scrivere], colonna_da_selezionare, valore_riferimento);
-  //  if (do_average) media(argv[file_da_leggere], argv[file_da_scrivere], colonna_da_mediare); // bisogna in realta' passare anche altri dati, per ora non e' implementata perche' non interessante
-
-  std::cout << "Done!" << std::endl;
-
-  return 0;
+bool checkEqual(double a, double b) {
+  return (fabs(a - b) < std::numeric_limits<double>::epsilon());
 }
+
+
+bool Belongs_to(char c, std::string s) {
+  for (size_t i = 0; i < s.size(); i++) { if (c == s.at(i)) return true; }
+  return false;
+}
+
+
+std::vector< std::vector<double> > Convert_to_double_vector(std::vector< std::vector<std::string> > parsed_file, std::string comment) {
+  std::vector<double> doubled_line;
+  std::vector< std::vector<double> > doubled_file;
+
+  for (auto &i : parsed_file) {
+    doubled_line.clear();
+    doubled_line.resize(i.size());
+    if (Belongs_to(i[0][0], comment)) continue;
+    for (size_t j = 0; j < i.size(); j++) doubled_line[j] = atof(i[j].c_str());
+    doubled_file.push_back(doubled_line);
+  }
+  return doubled_file;
+}
+
+
+std::vector< std::vector<std::string> > Parse_file(std::string file_name, std::string separators, std::string comment) {
+  // Safe file opening
+  std::ifstream file_to_parse(file_name, std::ios::in);
+  if (!file_to_parse) {
+    std::cout << "Cannot open " << file_name << ". Quitting..." << std::endl;
+    exit(12);
+  }
+  // Internal variables
+  std::string line;
+  std::vector<std::string> tokens;
+  std::vector< std::vector<std::string> > parsed;
+  while (getline(file_to_parse, line)) {
+    boost::algorithm::trim(line);  // remove leading/trailing spaces
+    if (Belongs_to(line[0], comment) || !line.size()) continue;
+    boost::algorithm::split(tokens, line, boost::algorithm::is_any_of(separators), boost::token_compress_off);
+    //std::transform(tokens[0].begin(), tokens[0].end(), tokens[0].begin(), ::tolower);
+    for (size_t i = 0; i < tokens.size(); i++) {  // remove inline comments
+      if (Belongs_to(tokens[i][0], comment)) { tokens.erase(tokens.begin() + i, tokens.end()); }
+    }
+    if (tokens.size()) {
+      parsed.push_back(tokens);
+    }
+    line.clear(); tokens.clear();
+  }
+  file_to_parse.close();
+  return parsed;
+}
+
+
 

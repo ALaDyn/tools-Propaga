@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "converter", "converter\converter.vcxproj", "{65EA2AB1-4BE0-4224-AB5A-38B70DB26915}"
 EndProject
@@ -16,6 +16,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sum-columns", "sum-columns\sum-columns.vcxproj", "{D29AD5CC-709D-43D7-A681-6521BBE62A99}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bunch-generator", "bunch-generator\bunch-generator.vcxproj", "{ACF99769-049C-44B2-BF6A-671D9F96869D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2F76A60B-3412-4F5C-87D7-0F85D42AB663}"
+	ProjectSection(SolutionItems) = preProject
+		.travis.yml = .travis.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
