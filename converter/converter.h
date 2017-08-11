@@ -1,5 +1,5 @@
 /*******************************************************************************
-*                    Copyright 2010-2015 Stefano Sinigardi                     *
+*                    Copyright 2010-2017 Stefano Sinigardi                     *
 * The program is distributed under the terms of the GNU General Public License *
 *******************************************************************************/
 
@@ -38,9 +38,6 @@ some special codes also exists, when energies in that contest are written in keV
 ********************************/
 
 
-#define _CRT_SECURE_NO_WARNINGS
-#define _USE_MATH_DEFINES
-
 #include <iostream>
 #include <vector>
 #include <cstdio>
@@ -60,11 +57,6 @@ some special codes also exists, when energies in that contest are written in keV
 #include <inttypes.h>
 #else
 #include <cstdint>
-#endif
-
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
-#pragma warning(disable : 869)
-#pragma warning(disable : 981)
 #endif
 
 #ifndef M_PI

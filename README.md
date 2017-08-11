@@ -1,19 +1,7 @@
-#tools for Propaga
+# tools-Propaga
 
-[![Build Status Master](https://travis-ci.org/ALaDyn/tools-Propaga.svg?branch=master)](https://travis-ci.org/ALaDyn/tools-Propaga "master")
-
-Copyright 2010-2016 Stefano Sinigardi
-The program is distributed under the terms of the GNU General Public License
-
-    These tools are free software: you can redistribute them and/or modify
-    them under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    These program are distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+[![Build Status Master](https://travis-ci.org/ALaDyn/tools-Propaga.svg?branch=master)](https://travis-ci.org/ALaDyn/tools-Propaga "master")  
+[![Build status](https://ci.appveyor.com/api/projects/status/miwm8hicbf4td4ic?svg=true)](https://ci.appveyor.com/project/cenit/tools-propaga)
 
 The main tool available in this suite is `converter`, which can read/write files in these formats:
 - Propaga

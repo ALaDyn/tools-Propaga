@@ -1,5 +1,5 @@
 /*******************************************************************************
-*                    Copyright 2010-2016 Stefano Sinigardi                     *
+*                    Copyright 2010-2017 Stefano Sinigardi                     *
 * The program is distributed under the terms of the GNU General Public License *
 *******************************************************************************/
 
@@ -20,11 +20,6 @@
 * along with tools-Propaga. If not, see <http://www.gnu.org/licenses/>.        *
 *******************************************************************************/
 
-
-
-
-#define _CRT_SECURE_NO_WARNINGS
-#define _SCL_SECURE_NO_WARNINGS
 
 #include <iostream>
 #include <vector>

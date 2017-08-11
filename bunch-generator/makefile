@@ -1,5 +1,5 @@
 
-FILES = BuGe.cpp
+FILES = bunch-generator.cpp
 DEPFILES = NumberGenerator.cpp
 
 EXES = $(addsuffix .exe, $(basename $(FILES)))
