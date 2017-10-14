@@ -3,6 +3,7 @@ TOOLS := bunch-generator \
 converter \
 revert-lines \
 scan-columns \
+scan-parameters \
 scramble-lines \
 seleziona-particelle \
 sum-columns
