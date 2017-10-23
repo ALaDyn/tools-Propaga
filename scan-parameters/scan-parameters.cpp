@@ -26,7 +26,7 @@
 #include "physycom/combexplosion.hpp"
 
 #define MAJOR_VERSION 0
-#define MINOR_VERSION 1
+#define MINOR_VERSION 2
 
 #define number_of_parameters_per_magnetic_element 6
 
@@ -70,8 +70,8 @@ public:
 
   jsoncons::json parameters;
   std::string input_parameters_filename;
-  std::string scan_name;
-  std::string input_dist_filename;
+  std::string run_name;
+  std::string input_distribution;
 
   double emin, emax;
   double dt;
@@ -97,6 +97,8 @@ void Propaga_parameters::parse_json_file() {
   jsoncons::json empty_json;
 
   try {
+    input_distribution = parameters.has_member("input_distribution") ? parameters["input_distribution"].as<std::string>() : "test.initialbunch.ppg";
+    run_name = parameters.has_member("run_name") ? parameters["run_name"].as<std::string>() : "test";
     emin = parameters.has_member("emin") ? parameters["emin"].as<double>() : 0.0;
     emax = parameters.has_member("emax") ? parameters["emax"].as<double>() : 1.0e+100;
     dt = parameters.has_member("dt") ? parameters["dt"].as<double>() : 0.01;
@@ -248,6 +250,8 @@ void Propaga_parameters::print_scan_input_files() {
   for (size_t index_comb = 0; index_comb < scan_d.size(); /**/)
   {
     jsoncons::json scan_parameters;
+    scan_parameters["input_distribution"] = input_distribution;
+    scan_parameters["run_name"] = run_name+ "_" + std::to_string(file_counter);
     scan_parameters["emin"] = emin;
     scan_parameters["emax"] = emax;
     scan_parameters["dt"] = dt;
@@ -274,7 +278,7 @@ void Propaga_parameters::print_scan_input_files() {
     }
     scan_parameters["Magnetic_elements"] = mel;
 
-    std::string output_name = scan_name + "_" + std::to_string(file_counter) + ".json";
+    std::string output_name = run_name + "_" + std::to_string(file_counter) + ".json";
     std::ofstream output_file;
     output_file.open(output_name.c_str());
     try {
@@ -296,8 +300,6 @@ int main()
   std::cout << "scan-parameters v" << MAJOR_VERSION << "." << MINOR_VERSION << std::endl;
   Propaga_parameters parametri;
   parametri.input_parameters_filename = "input.json";
-  parametri.scan_name = "test";
-  parametri.input_dist_filename = parametri.scan_name + ".initialbunch.ppg";
 
   parametri.parse_json_file();
 

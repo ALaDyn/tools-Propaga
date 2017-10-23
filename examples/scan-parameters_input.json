@@ -1,8 +1,10 @@
 {
+  "input_distribution": "test.initialbunch.ppg",
+  "run_name": "scan",
   "emin": -1,
   "emax": -1,
   "dt": 0.1,
-  "steps_between_dumps": 5000,
+  "steps_between_dumps": 0,
   "steps_between_diags": 50,
   "Magnetic_elements": [
     {
