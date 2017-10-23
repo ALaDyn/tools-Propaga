@@ -1,3 +1,6 @@
 [submodule "ext/jsoncons"]
 	path = ext/jsoncons
 	url = https://github.com/danielaparker/jsoncons.git
+[submodule "ext/utils"]
+	path = ext/utils
+	url = https://github.com/physycom/utils.git

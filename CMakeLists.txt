@@ -15,8 +15,9 @@ if(MSVC)
 endif()
 
 set(JSONCONS_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/ext/jsoncons/include)
+set(PHYSYCOM_UTILS_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/ext/utils)
 find_package(Boost REQUIRED)
-include_directories(${JSONCONS_INCLUDE_PATH} ${Boost_INCLUDE_DIR})
+include_directories(${JSONCONS_INCLUDE_PATH} ${Boost_INCLUDE_DIR} ${PHYSYCOM_UTILS_INCLUDE_PATH})
 
 add_executable(bunch-generator                ${CMAKE_SOURCE_DIR}/bunch-generator/bunch-generator.cpp ${CMAKE_SOURCE_DIR}/bunch-generator/NumberGenerator.cpp ${CMAKE_SOURCE_DIR}/bunch-generator/NumberGenerator.h)
 add_executable(converter                      ${CMAKE_SOURCE_DIR}/converter/converter.cpp ${CMAKE_SOURCE_DIR}/converter/converter.h)

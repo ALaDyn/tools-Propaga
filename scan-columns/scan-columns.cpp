@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 
   if (file_da_leggere < 1 || file_da_scrivere < 1 || colonna_da_selezionare < 1)
   {
-    printf("Something went wrong in the command line\n");
+    std::cerr << "Something went wrong in the command line" << std::endl;
     return 200;
   }
 
@@ -104,11 +104,11 @@ void seleziona(char* file_da_leggere, char* file_da_scrivere, size_t colonna_ana
   std::vector< std::vector<std::string> > parsed_file = Parse_file(file_da_leggere, SEPARATORS);
   std::vector< std::vector<double> > doubled_file = Convert_to_double_vector(parsed_file, COMMENTS);
 
-  printf("Considering %d-th column as the one used to select data\n", colonna_analizzata);
+  std::cout << "Considering " << colonna_analizzata << "th column as the one used to select data" << std::endl;
 
   if (doubled_file.front().size() <= colonna_analizzata)
   {
-    printf("Not enough columns in the input file\n");
+    std::cerr << "Not enough columns in the input file" << std::endl;
     return;
   }
 

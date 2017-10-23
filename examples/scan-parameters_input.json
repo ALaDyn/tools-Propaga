@@ -1,0 +1,54 @@
+{
+  "emin": -1,
+  "emax": -1,
+  "dt": 0.1,
+  "steps_between_dumps": 5000,
+  "steps_between_diags": 50,
+  "Magnetic_elements": [
+    {
+      "type": "J",
+      "begin_range": [1.0, 1.0, 1.0],
+      "length_range": [0.0, 0.0, 1.0],
+      "par_01_range": [0.05, 0.05, 1.0],
+      "par_02_range": [0.0, 0.0, 0.0],
+      "par_03_range": [0.0, 0.0, 0.0],
+      "par_04_range": [0.0, 0.0, 0.0]
+    },
+    {
+      "type": "F",
+      "begin_range": [2.0, 3.0, 1.0],
+      "length_range": [2.0, 2.0, 1.0],
+      "par_01_range": [60.0, 80.0, 5.0],
+      "par_02_range": [0.0, 0.0, 0.0],
+      "par_03_range": [0.0, 0.0, 0.0],
+      "par_04_range": [0.0, 0.0, 0.0]
+    },
+    {
+      "type": "D",
+      "begin_range": [8.0, 9.0, 1.0],
+      "length_range": [2.0, 2.0, 1.0],
+      "par_01_range": [70.0, 90.0, 5.0],
+      "par_02_range": [0.0, 0.0, 0.0],
+      "par_03_range": [0.0, 0.0, 0.0],
+      "par_04_range": [0.0, 0.0, 0.0]
+    },
+    {
+      "type": "F",
+      "begin_range": [15.0, 16.0, 1.0],
+      "length_range": [2.0, 2.0, 1.0],
+      "par_01_range": [50.0, 70.0, 5.0],
+      "par_02_range": [0.0, 0.0, 0.0],
+      "par_03_range": [0.0, 0.0, 0.0],
+      "par_04_range": [0.0, 0.0, 0.0]
+    },
+    {
+      "type": "D",
+      "begin_range": [23.0, 24.0, 1.0],
+      "length_range": [2.0, 2.0, 1.0],
+      "par_01_range": [80.0, 90.0, 5.0],
+      "par_02_range": [0.0, 0.0, 0.0],
+      "par_03_range": [0.0, 0.0, 0.0],
+      "par_04_range": [0.0, 0.0, 0.0]
+    }
+  ]
+}

@@ -96,7 +96,7 @@ int main(int narg, char *args[])
   infile.seekg(0, std::ios::beg);
   infile.close();
 
-  std::cout << "Trovate " << contarighe << " righe non di commenti (#).\nVerrà creato un file che somma la terza colonna di tutti questi files." << std::endl;
+  std::cout << "Trovate " << contarighe << " righe non di commenti (#).\nVerra` creato un file che somma la terza colonna di tutti questi files." << std::endl;
 
   double ** dati;
   dati = new double*[contarighe];
